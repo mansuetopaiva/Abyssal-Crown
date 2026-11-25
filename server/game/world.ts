@@ -88,6 +88,9 @@ export abstract class World {
     if (p.slowUntil > this.time) f |= F_SLOW;
     if (p.poison && p.poison.until > this.time) f |= F_POISON;
     if (p.buffs.some((b) => b.until > this.time)) f |= F_BUFF;
+    // bits 8..13: direção da mira em 64 passos
+    const a = ((p.aim % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    f |= (Math.round((a / (Math.PI * 2)) * 64) & 63) << 8;
     return f;
   }
 
@@ -101,7 +104,7 @@ export abstract class World {
         if (o !== p && dx * dx + dy * dy > r2) continue;
         seen.add(o.eid);
         const row: unknown[] = [o.eid, K_PLAYER, Math.round(o.x * 10), Math.round(o.y * 10), Math.round((o.hp / o.stats.maxHp) * 100), this.playerFlags(o)];
-        if (!p.known.has(o.eid)) { const w = o.char.data.equipment.weapon; row.push({ n: o.name, c: o.char.classId, l: o.char.level, cos: o.char.data.cosmetic, w: w?.baseType, wr: w ? RANKS.indexOf(w.rank) : 0 }); }
+        if (!p.known.has(o.eid)) { const w = o.char.data.equipment.weapon; row.push({ n: o.name, c: o.char.classId, l: o.char.level, cos: o.char.data.cosmetic, w: w?.baseType, wr: w ? RANKS.indexOf(w.rank) : 0, o: o.char.data.equipment.offhand?.baseType }); }
         e.push(row);
       }
       this.extraEntities(p, e);

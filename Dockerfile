@@ -15,6 +15,7 @@ RUN (npm ci --omit=dev || npm install --omit=dev) && npm cache clean --force
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/client/index.html /app/client/styles.css /app/client/config.js ./client/
 COPY --from=build /app/client/dist ./client/dist
+COPY --from=build /app/client/assets ./client/assets
 RUN mkdir -p /data && chown node:node /data
 USER node
 VOLUME ["/data"]

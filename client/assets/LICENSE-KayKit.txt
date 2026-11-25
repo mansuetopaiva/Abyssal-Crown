@@ -1,0 +1,6 @@
+Modelos 3D em client/assets/models/ — KayKit (Kay Lousberg), licença CC0 1.0 (domínio público).
+Uso pessoal e comercial livre, sem atribuição obrigatória.
+- KayKit Character Pack: Adventurers 1.0 — https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0
+- KayKit Character Pack: Skeletons 1.0 — https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0
+- KayKit Dungeon Remastered 1.0 — https://github.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0
+Os arquivos foram otimizados com scripts/prepare-assets.mjs (menos animações, texturas de 256 px).

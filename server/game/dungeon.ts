@@ -286,6 +286,7 @@ export class Dungeon extends World {
         else if (d < want * 0.6) this.moveMonster(m, -dx, -dy, m.speed * 0.7, dt);
         if (d <= m.range && t >= m.nextAtk && lineOfSight(this.grid, m.x, m.y, tgt.x, tgt.y)) {
           m.nextAtk = t + m.atkCd * (0.85 + rnd() * 0.3);
+          this.emit(['at', m.x, m.y, m.id, m.ai === 'ranged' ? 1 : 2]);
           if (m.ai === 'ranged') {
             const a = Math.atan2(dy, dx);
             this.addMonsterProj(m, a, m.projSpeed, 1);
@@ -315,6 +316,7 @@ export class Dungeon extends World {
         else if (t >= m.nextAtk) {
           m.nextAtk = t + m.atkCd;
           this.emit(['sw', m.x, m.y, Math.atan2(dy, dx), 1.4, m.range + m.r, 9]);
+          this.emit(['at', m.x, m.y, m.id, 0]);
           this.monsterHit(m, tgt, 1, true);
         }
     }
@@ -371,10 +373,12 @@ export class Dungeon extends World {
     else if (t >= m.nextAtk) {
       m.nextAtk = t + m.atkCd / spdMul;
       this.emit(['sw', m.x, m.y, Math.atan2(tgt.y - m.y, tgt.x - m.x), 2, m.range + m.r + 6, 9]);
+      this.emit(['at', m.x, m.y, m.id, 0]);
       this.monsterHit(m, tgt, 1.2, true);
     }
     if (t >= b.nextAbility) {
       const list = def.phases[b.phase];
+      this.emit(['at', m.x, m.y, m.id, 2]);
       this.bossAbility(m, list[(rnd() * list.length) | 0], tgt);
       b.nextAbility = t + (2.8 - b.phase * 0.5) * (0.85 + rnd() * 0.3);
     }
@@ -728,6 +732,8 @@ export class Dungeon extends World {
     if (p.dead || p.stunUntil > t || t < p.atkReady || !Number.isFinite(a)) return;
     const s = p.stats;
     p.atkReady = t + 1 / (s.atkSpd * (1 + p.buffSum('atkSpd', t)));
+    p.aim = a;
+    this.emit(['at', p.x, p.y, p.eid, s.weapon.attack === 'melee' ? 0 : s.weapon.attack === 'ranged' ? 1 : 2]);
     const times = s.uniques.includes('doubleStrike') ? 2 : 1;
     const w = s.weapon;
     for (let i = 0; i < times; i++) {
@@ -757,6 +763,8 @@ export class Dungeon extends World {
     p.mana -= sk.mana;
     const cd = sk.cd * (1 - p.stats.cdr);
     p.cds[sk.id] = t + cd;
+    p.aim = a;
+    this.emit(['at', p.x, p.y, p.eid, ['arc', 'aoe_self', 'dash'].includes(sk.type) ? 0 : sk.type === 'projectile' && p.stats.weapon.attack === 'ranged' ? 1 : 2]);
     p.send({ t: 'cd', id: sk.id, ms: Math.round(cd * 1000) });
     if (p.stealthUntil > t && sk.type !== 'stealth') p.stealthUntil = 0;
     const el = (sk.element ?? 'physical') as Element;

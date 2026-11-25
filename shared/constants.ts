@@ -71,7 +71,7 @@ export function floorScaling(floor: number) {
   const cycle = Math.floor(f / (BIOME_EVERY * BIOMES.length)); // volta ao primeiro bioma mais forte
   const hp = (1 + 0.16 * f) * Math.pow(1.035, f) * (1 + cycle);
   const dmg = (1 + 0.1 * f) * Math.pow(1.025, f) * (1 + cycle * 0.5);
-  const count = Math.min(42, 7 + Math.floor(f * 0.45));
+  const count = Math.min(70, 16 + Math.floor(f * 0.6));
   return { hp, dmg, count };
 }
 

@@ -1,6 +1,6 @@
 # Abyssal Crown
 
-Dungeon crawler multiplayer para navegador, em pixel art dark fantasy. Cada jogador tem a sua conta (até 3 heróis).
+Dungeon crawler multiplayer para navegador, em 3D estilizado dark fantasy (câmera isométrica, estilo Diablo). Cada jogador tem a sua conta (até 3 heróis).
 Os jogadores se encontram na cidade, conversam no chat global, formam grupos de até 4 e descem andares infinitos
 gerados proceduralmente, com chefes a cada 10 andares.
 
@@ -16,7 +16,8 @@ gerados proceduralmente, com chefes a cada 10 andares.
 | Itens | Ranks F→SSS com as chances pedidas, 0 a 6 atributos aleatórios, 10 itens SSS lendários com efeito único e anúncio no chat, 11 tipos de arma, 9 slots |
 | Classes | Guerreiro, Mago, Arqueiro, Ladino, Clérigo e Necromante — 4 habilidades + ultimate liberadas por nível (1, 3, 6, 10 e 15), 9 talentos cada, 5 atributos base |
 | Economia | Gold e Gemas; venda ao mercador (item a item ou em lote por rank), Ferreiro (comprar, refinar +1..+15, reparar), Alquimista, Joalheira (gemas de engaste, combinar), Mercado entre jogadores com taxa de 5%, loja de gemas, missões diárias, conquistas, log de todas as transações |
-| Interface | Iluminação dinâmica com tochas, sprites sombreados, inventário sempre ordenado por rank, HUD (vida, mana, XP, habilidades com recarga, minimapa, andar), textos de dano coloridos (crítico maior e amarelo), partículas em drops raros, ranking global, controles de teclado/mouse e toque |
+| Gráficos | 3D com Three.js: heróis e esqueletos animados (KayKit, CC0), masmorras montadas com peças 3D, tochas com luz real, sombras, névoa, partículas, telhados e NPCs na cidade |
+| Interface | inventário sempre ordenado por rank, HUD (vida, mana, XP, habilidades com recarga, minimapa, andar), textos de dano coloridos (crítico maior e amarelo), partículas em drops raros, ranking global, controles de teclado/mouse e toque |
 
 ## Stack
 
@@ -30,9 +31,9 @@ foi trocado por um equivalente sem dependências extras, isolado em um único ar
 | Socket.IO | `ws` + mensagens JSON `{ t: ... }` | `server/game/hub.ts`, `client/src/game.ts` | `ws.send` → `socket.emit`, `onmessage` → `socket.on` |
 | Prisma + PostgreSQL | `node:sqlite` (SQLite embutido no Node 22) | `server/db.ts` (classe `Repo`) | Implementar os mesmos métodos com Prisma; o esquema está no topo do arquivo |
 | bcrypt | `crypto.scrypt` (N=16384) | `server/auth.ts` | `hashPassword`/`verifyPassword` |
-| Phaser 3 | Canvas 2D próprio com atlas, culling por chunk e pools | `client/src/render/` | Reaproveitar `shared/` e a rede; refazer só o desenho |
+| Phaser 3 | **Three.js** (3D, WebGL) com modelos KayKit | `client/src/render3d/` | — (3D foi pedido depois; Phaser é só 2D) |
 
-Dependências de execução: só `ws`. De desenvolvimento: `typescript`, `tsx`, `esbuild`.
+Dependências: `ws` (servidor) e `three` (cliente, empacotado pelo esbuild). De desenvolvimento: `typescript`, `tsx`, `esbuild`.
 
 ## Rodar localmente (WSL / Linux / macOS)
 
@@ -107,6 +108,22 @@ tests/             node:test
 scripts/e2e.mjs    teste no navegador
 ```
 
+## Modelos 3D
+
+Os modelos ficam em `client/assets/models/` e vêm dos pacotes gratuitos **KayKit** (licença CC0, uso comercial
+liberado; detalhes em `client/assets/LICENSE-KayKit.txt`). Eles já estão otimizados: só as animações usadas e texturas
+de 256 px, cerca de 1 MB por personagem (o servidor envia com gzip). Cada modelo só é baixado na primeira vez em que
+aparece.
+
+Para trocar ou adicionar modelos, clone os pacotes do KayKit e rode:
+```bash
+npm install --no-save sharp
+node scripts/prepare-assets.mjs ../KayKit-Character-Pack-Adventures-1.0 ../KayKit-Character-Pack-Skeletons-1.0 ../KayKit-Dungeon-Remastered-1.0
+```
+O mapeamento de classe → modelo, arma → modelo e monstro → modelo fica em `client/src/render3d/models.ts` e
+`client/src/render3d/renderer3d.ts`. Monstros que não têm modelo pronto (gosmas, morcegos, aranhas, olhos etc.) são
+montados com formas 3D simples, nas cores do `monsters.json`.
+
 ## Balanceamento
 
 Tudo que é número de jogo está em JSON ou em `shared/constants.ts`:
@@ -121,14 +138,17 @@ Depois de mudar, rode `npm test` (os testes de drops conferem a tabela de chance
 
 ## Desempenho
 
-- O mapa é desenhado em blocos de 16×16 tiles pré-renderizados, e só os blocos visíveis são desenhados.
-- Sprites e tiles são gerados uma vez em canvas e reaproveitados. Os tiles de cada bioma só são gerados quando o
-  jogador chega nele.
-- Entidades, textos de dano, partículas e efeitos usam pools, sem alocar memória a cada quadro.
+- Piso, paredes e decoração usam `InstancedMesh` agrupados em blocos de 12×12 tiles, e os blocos fora da câmera não
+  são desenhados. Uma luta típica fica em cerca de 100–180 draw calls e 220 mil triângulos.
+- Só as 6 tochas mais próximas acendem uma luz real. Sombras só na luz principal (mapa de 1024 px).
+- Partículas num único `Points` (um draw call). Objetos 3D de monstros, projéteis e loot são reaproveitados (pool por tipo).
+- Se o FPS ficar abaixo de 40 por alguns segundos, o jogo desliga as sombras e reduz a resolução automaticamente.
+- Roda o scroll do mouse para aproximar ou afastar a câmera.
 - O servidor só envia entidades próximas de cada jogador, e o nome/tipo de cada uma só na primeira vez que aparece.
 - O loop para quando a aba vai para segundo plano.
-- Medição (Chromium headless, sem GPU, 1280×720): **60 FPS, pior quadro de 17 ms** na dungeon. Um andar 72×72
-  ocupa menos de 4 KB codificado. O tempo de tick do servidor aparece em `/api/status`.
+- O ambiente de testes não tem placa de vídeo (renderiza o 3D por software), então lá o FPS fica em ~10 e não
+  representa um notebook real. O teste `scripts/e2e.mjs` mostra FPS, draw calls e triângulos. Rode-o na sua
+  máquina para ver o número real. O tempo de tick do servidor aparece em `/api/status`.
 
 ## Deploy
 

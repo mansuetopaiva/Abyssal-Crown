@@ -99,15 +99,15 @@ export interface LootContext { floor: number; boss: boolean; elite: boolean; mag
 export interface LootResult { gold: number; items: Item[]; gems: number }
 
 export function rollMonsterLoot(rng: Rng, ctx: LootContext): LootResult {
-  const gold = Math.round((3 + ctx.floor * 1.6) * (0.6 + rng() * 0.8) * (ctx.elite ? 3 : 1) * (ctx.boss ? 15 : 1) * (1 + ctx.goldFind));
+  const gold = Math.round((4 + ctx.floor * 2) * (0.6 + rng() * 0.8) * (ctx.elite ? 3 : 1) * (ctx.boss ? 15 : 1) * (1 + ctx.goldFind));
   const bonus: LootBonus = { boss: ctx.boss, magicFind: ctx.magicFind + (ctx.elite ? 0.15 : 0) };
   let n = 0;
   if (ctx.boss) n = 2 + randInt(rng, 0, 2);
-  else if (ctx.elite) n = rng() < 0.65 ? 1 + (rng() < 0.2 ? 1 : 0) : 0;
-  else n = rng() < 0.16 ? 1 : 0;
+  else if (ctx.elite) n = rng() < 0.85 ? 1 + (rng() < 0.3 ? 1 : 0) : 0;
+  else n = rng() < 0.24 ? 1 : 0;
   const items: Item[] = [];
   for (let i = 0; i < n; i++) items.push(rollItem(rng, { ilvl: ctx.floor, floor: ctx.floor, bonus }));
-  const gems = ctx.boss ? 5 + Math.floor(ctx.floor / 10) * 2 : ctx.elite && rng() < 0.04 ? 1 : 0;
+  const gems = ctx.boss ? 6 + Math.floor(ctx.floor / 10) * 2 : ctx.elite && rng() < 0.06 ? 1 : 0;
   return { gold, items, gems };
 }
 

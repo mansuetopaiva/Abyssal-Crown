@@ -6,14 +6,15 @@ import type { Stats } from '../../shared/types';
 import { wsUrl } from './api';
 import { $, h, fmt } from './dom';
 import { Pool } from './render/pool';
-import { F_DEAD, K_BOSS, K_LOOT, K_MONSTER, K_PLAYER, Renderer, type Ent, type MapState } from './render/renderer';
+import { F_DEAD, K_BOSS, K_LOOT, K_MONSTER, K_PLAYER, type Ent, type MapState } from './render3d/common';
+import { Renderer3D } from './render3d/renderer3d';
 import { Panels } from './ui/panels';
 
 const INTERP_MS = 100;
 
 export class Game {
   ws!: WebSocket;
-  r: Renderer;
+  r: Renderer3D;
   ents = new Map<number, Ent>();
   entPool = new Pool<Ent>(() => ({ id: 0, kind: 0, x: 0, y: 0, hp: 100, flags: 0, meta: {}, buf: [], seen: 0, flash: 0, face: 1, prevX: 0, bob: 0, active: false }), 2000);
   selfEid = 0;
@@ -52,7 +53,7 @@ export class Game {
   onExit: () => void = () => {};
 
   constructor(public charId: number) {
-    this.r = new Renderer($<HTMLCanvasElement>('#game-canvas'), $<HTMLCanvasElement>('#minimap'));
+    this.r = new Renderer3D($<HTMLCanvasElement>('#game-canvas'), $<HTMLCanvasElement>('#overlay'), $<HTMLCanvasElement>('#minimap'));
     this.panels = new Panels(this);
     this.bindInput();
   }
@@ -95,8 +96,8 @@ export class Game {
       case 'tile': this.r.setTile(m.x, m.y, m.v); break;
       case 'obj':
         if (!this.map) break;
-        if (m.stairs && this.map.stairs) this.map.stairs.open = true;
-        if (typeof m.i === 'number' && this.map.objects[m.i]) this.map.objects[m.i].open = !!m.open;
+        if (m.stairs && this.map.stairs) { this.map.stairs.open = true; this.r.openStairs(); }
+        if (typeof m.i === 'number' && this.map.objects[m.i]) { this.map.objects[m.i].open = !!m.open; if (m.open) this.r.openChest(m.i); }
         break;
       case 'pos': this.px = this.prevPx = m.x; this.py = this.prevPy = m.y; this.pending = []; break;
       case 'cd': this.cds.set(m.id, { until: performance.now() + m.ms, total: m.ms }); break;
@@ -242,6 +243,7 @@ export class Game {
 
     if (this.map?.world === 'dungeon' || !this.touchMode) this.r.selfAim = this.aimAngle();
     // câmera segue o jogador
+    (window as any).__pos = { x: this.px, y: this.py }; // usado pelo teste E2E
     this.r.camX = this.prevPx + (this.px - this.prevPx) * alpha;
     this.r.camY = this.prevPy + (this.py - this.prevPy) * alpha;
     this.updateHover();

@@ -80,14 +80,14 @@ export function generateFloor(seed: number, floor: number): FloorMap {
 }
 
 function normalFloor(rng: Rng, floor: number): FloorMap {
-  const size = Math.min(96, 48 + Math.floor(floor / 5) * 2);
+  const size = Math.min(120, 66 + Math.floor(floor / 5) * 2);
   const w = size, h = size;
   const tiles = new Uint8Array(w * h);
   const rooms: Room[] = [];
-  const target = Math.min(18, 8 + Math.floor(floor / 8));
+  const target = Math.min(28, 13 + Math.floor(floor / 6));
   const overlaps = (r: Room) => rooms.some((o) => r.x - 2 < o.x + o.w && r.x + r.w + 2 > o.x && r.y - 2 < o.y + o.h && r.y + r.h + 2 > o.y);
-  for (let tries = 0; tries < 400 && rooms.length < target; tries++) {
-    const r: Room = { w: randInt(rng, 5, 11), h: randInt(rng, 5, 9), x: 0, y: 0 };
+  for (let tries = 0; tries < 800 && rooms.length < target; tries++) {
+    const r: Room = { w: randInt(rng, 6, 13), h: randInt(rng, 5, 11), x: 0, y: 0 };
     r.x = randInt(rng, 2, w - r.w - 3);
     r.y = randInt(rng, 2, h - r.h - 3);
     if (!overlaps(r)) rooms.push(r);
@@ -120,18 +120,18 @@ function normalFloor(rng: Rng, floor: number): FloorMap {
   const randomIn = (r: Room): Pt => ({ x: randInt(rng, r.x + 1, r.x + r.w - 2), y: randInt(rng, r.y + 1, r.y + r.h - 2) });
   const normalRooms = rooms.slice(1).filter((r) => !r.secret);
 
-  const chests = randInt(rng, 1, 3);
+  const chests = randInt(rng, 3, 6);
   for (let i = 0; i < chests && normalRooms.length; i++) {
     const p = randomIn(normalRooms[randInt(rng, 0, normalRooms.length - 1)]);
     if (free(p.x, p.y)) m.objects.push({ ...p, kind: 'chest' });
   }
-  const traps = Math.min(14, 3 + Math.floor(floor / 4));
+  const traps = Math.min(18, 4 + Math.floor(floor / 4));
   for (let i = 0, tries = 0; i < traps && tries < 200; tries++) {
     const x = randInt(rng, 1, w - 2), y = randInt(rng, 1, h - 2);
     if (free(x, y)) { m.objects.push({ x, y, kind: 'trap' }); i++; }
   }
   const { count } = floorScaling(floor);
-  for (let i = 0, tries = 0; i < count && tries < 500 && normalRooms.length; tries++) {
+  for (let i = 0, tries = 0; i < count && tries < 1500 && normalRooms.length; tries++) {
     const p = randomIn(normalRooms[randInt(rng, 0, normalRooms.length - 1)]);
     if (free(p.x, p.y)) { m.spawns.push(p); i++; }
   }

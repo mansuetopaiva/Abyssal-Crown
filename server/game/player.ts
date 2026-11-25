@@ -40,6 +40,7 @@ export class Player {
   lastChat = 0;
   starfallAt = 0;
   lastHitBy = '';
+  aim = 0; // último ângulo de ataque (para o cliente virar o personagem)
 
   constructor(public ws: WebSocket, public char: Character, public userId: number) {
     this.recompute();

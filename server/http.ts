@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
+import { gzipSync } from 'node:zlib';
 import { CHARNAME_RE, getDummyHash, hashPassword, signJwt, validateRegistration, verifyJwt, verifyPassword } from './auth';
 import type { Repo } from './db';
 import { MAX_CHARACTERS } from '../shared/constants';
@@ -78,8 +79,11 @@ export function originAllowed(req: IncomingMessage, cfg: HttpConfig): boolean {
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.map': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json',
-  '.webmanifest': 'application/manifest+json',
+  '.webmanifest': 'application/manifest+json', '.glb': 'model/gltf-binary',
 };
+
+const COMPRESSIBLE = new Set(['.js', '.css', '.html', '.glb', '.json', '.map', '.svg']);
+const gzCache = new Map<string, { mtime: number; data: Buffer }>();
 
 function securityHeaders(res: ServerResponse, prod: boolean) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -87,7 +91,7 @@ function securityHeaders(res: ServerResponse, prod: boolean) {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss: blob: data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
   );
   if (prod) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 }
@@ -230,8 +234,16 @@ export function createHttpHandler(repo: Repo, cfg: HttpConfig, hooks: { onCharac
       const st = await stat(file);
       if (!st.isFile()) throw new Error();
       const ext = extname(file);
-      const immutable = rel.startsWith('/dist/') && !cfg.prod ? 'no-cache' : rel.startsWith('/dist/') ? 'public, max-age=3600' : 'no-cache';
-      res.writeHead(200, { 'Content-Type': MIME[ext] ?? 'application/octet-stream', 'Cache-Control': immutable });
+      const cache = rel.startsWith('/assets/') ? 'public, max-age=604800' : rel.startsWith('/dist/') && cfg.prod ? 'public, max-age=3600' : 'no-cache';
+      const headers: Record<string, string> = { 'Content-Type': MIME[ext] ?? 'application/octet-stream', 'Cache-Control': cache, Vary: 'Accept-Encoding' };
+      // compressão gzip (em memória) para JS, CSS, HTML e modelos 3D
+      if (COMPRESSIBLE.has(ext) && /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''))) {
+        let c = gzCache.get(file);
+        if (!c || c.mtime !== st.mtimeMs) { c = { mtime: st.mtimeMs, data: gzipSync(await readFile(file), { level: 6 }) }; gzCache.set(file, c); }
+        res.writeHead(200, { ...headers, 'Content-Encoding': 'gzip' });
+        return res.end(c.data);
+      }
+      res.writeHead(200, headers);
       res.end(await readFile(file));
     } catch {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
