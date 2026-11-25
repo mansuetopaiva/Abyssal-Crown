@@ -45,6 +45,7 @@ export interface CharacterData {
   cosmetic: string;
   invSlots: number;
   phoenixUsed?: boolean;
+  shop?: { date: string; bought: number[] };
 }
 
 export interface Character {
