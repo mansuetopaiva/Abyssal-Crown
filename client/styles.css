@@ -57,6 +57,8 @@ input { width: 100%; padding: 10px 12px; background: var(--ink); border: 1px sol
 input:focus { border-color: var(--gold); outline: none; }
 input[aria-invalid='true'] { border-color: var(--bad); }
 .hint { color: var(--muted); font-size: 12px; }
+form label.check { display: flex; gap: 8px; align-items: center; margin: 12px 0 0; color: var(--text); cursor: pointer; }
+form label.check input { width: auto; accent-color: var(--gold); }
 .form-error { color: var(--bad); min-height: 20px; margin: 12px 0 4px; font-size: 13px; }
 .btn { border: 1px solid var(--line-2); background: var(--ink-3); padding: 10px 16px; border-radius: var(--radius); }
 .btn:hover:not(:disabled) { border-color: var(--gold); }

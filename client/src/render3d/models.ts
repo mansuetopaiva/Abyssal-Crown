@@ -65,8 +65,9 @@ export function makeCharacter(gltf: any, opts: { tint?: string; opacity?: number
   const scene = SkeletonUtils.clone(gltf.scene);
   let handR: any = null, handL: any = null;
   scene.traverse((o: any) => {
-    if (o.name === 'handslot.r') handR = o;
-    if (o.name === 'handslot.l') handL = o;
+    // o GLTFLoader remove pontos dos nomes: 'handslot.r' vira 'handslotr'
+    if (o.name === 'handslot.r' || o.name === 'handslotr') handR = o;
+    if (o.name === 'handslot.l' || o.name === 'handslotl') handL = o;
     if (o.isMesh) {
       if (!opts.keepAccessories && ACCESSORY.test(o.name)) o.visible = false;
       if (opts.tint || (opts.opacity ?? 1) < 1) o.material = tinted(o.material, opts.tint ?? '#ffffff', opts.opacity ?? 1);
@@ -83,18 +84,24 @@ export function makeCharacter(gltf: any, opts: { tint?: string; opacity?: number
 }
 
 /** Coloca a arma do equipamento na mão do personagem. */
-export function attach(view: CharView, hand: 'r' | 'l', model: string) {
+export function attach(view: CharView, hand: 'r' | 'l', model: string, glow = '') {
   const slot = hand === 'r' ? view.handR : view.handL;
   const key = hand === 'r' ? 'weapon' : 'offhand';
-  if (!slot || view[key] === model) return;
-  view[key] = model;
+  const id = model ? `${model}|${glow}` : '';
+  if (!slot || view[key] === id) return;
+  view[key] = id;
   for (const c of [...slot.children]) if (c.userData.equip) slot.remove(c);
   if (!model) return;
   load(model).then((g) => {
-    if (view[key] !== model) return;
+    if (view[key] !== id) return;
     const w = g.scene.clone();
     w.userData.equip = true;
-    w.traverse((o: any) => { if (o.isMesh) o.castShadow = true; });
+    w.traverse((o: any) => {
+      if (!o.isMesh) return;
+      o.castShadow = true;
+      // armas de rank alto brilham na cor do rank
+      if (glow) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(glow); o.material.emissiveIntensity = 0.55; }
+    });
     slot.add(w);
   }).catch(() => {});
 }

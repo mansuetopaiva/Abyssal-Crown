@@ -10,7 +10,8 @@ function toAuth() {
   game?.close();
   game = null;
   show('screen-auth');
-  $<HTMLInputElement>('#login-user').focus();
+  const user = $<HTMLInputElement>('#login-user');
+  (user.value ? $<HTMLInputElement>('#login-pass') : user).focus();
 }
 
 async function toChars() {

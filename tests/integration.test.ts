@@ -20,7 +20,7 @@ async function api(path: string, body?: unknown, cookie = '', method?: string) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const setCookie = res.headers.get('set-cookie') ?? '';
-  return { status: res.status, json: (await res.json()) as any, cookie: setCookie.split(';')[0] };
+  return { status: res.status, json: (await res.json()) as any, cookie: setCookie.split(';')[0], raw: setCookie };
 }
 
 function connect(cookie: string): Promise<{ ws: WebSocket; next: (t: string, pred?: (m: any) => boolean) => Promise<any> }> {
@@ -47,8 +47,11 @@ test('cadastro, login, personagens e limite de 3', async () => {
   assert.equal(dup.status, 409);
   const bad = await api('/api/login', { login: 'heroi1', password: 'errada123' });
   assert.equal(bad.status, 401);
-  const ok = await api('/api/login', { login: 'h1@x.com', password: 'abc12345' });
+  const ok = await api('/api/login', { login: 'h1@x.com', password: 'abc12345', remember: true });
   assert.equal(ok.status, 200);
+  assert.match(ok.raw, /Max-Age=2592000/, 'manter conectado = cookie de 30 dias');
+  const temp = await api('/api/login', { login: 'heroi1', password: 'abc12345' });
+  assert.doesNotMatch(temp.raw, /Max-Age/, 'sem marcar = cookie de sessão');
   for (const [i, cls] of ['warrior', 'mage', 'rogue'].entries()) {
     const c = await api('/api/characters', { name: `Heroi${i}`, classId: cls }, ok.cookie);
     assert.equal(c.status, 201, JSON.stringify(c.json));

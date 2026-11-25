@@ -679,7 +679,7 @@ export class Renderer3D {
         if (!v?.char) { if (v) v.atkUntil = this.time + 0.3; break; }
         const type = f[4] as number;
         const ent = v.char;
-        const two = TWO_HANDED.has(Object.keys(WEAPON_MODEL).find((k) => WEAPON_MODEL[k] === ent.weapon) ?? '');
+        const two = TWO_HANDED.has(Object.keys(WEAPON_MODEL).find((k) => WEAPON_MODEL[k] === ent.weapon.split('|')[0]) ?? '');
         const clip = type === 0 ? (two ? '2H_Melee_Attack_Chop' : '1H_Melee_Attack_Chop') : type === 1 ? (two ? '2H_Ranged_Shoot' : '1H_Ranged_Shoot') : 'Spellcast_Shoot';
         play(ent, clip, { once: true, fade: 0.08, speed: 1.6 });
         v.atkUntil = this.time + 0.5;
@@ -780,7 +780,9 @@ export class Renderer3D {
     if (v.char) {
       const c = v.char;
       if (e.kind === K_PLAYER) {
-        attach(c, 'r', WEAPON_MODEL[e.meta.w] ?? '');
+        const wr = e.meta.wr ?? 0;
+        const rc = RANK_INFO[RANKS[wr] ?? 'F'].color;
+        attach(c, 'r', WEAPON_MODEL[e.meta.w] ?? '', wr >= 5 ? (rc === 'rainbow' ? '#ffd23f' : rc) : '');
         attach(c, 'l', OFFHAND_MODEL[e.meta.o] ?? (e.meta.w === 'grimoire' ? '' : ''));
       }
       if (dead && !v.dead) { play(c, 'Death_A', { once: true, fade: 0.1 }); v.dead = true; }

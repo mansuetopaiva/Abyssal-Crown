@@ -35,7 +35,7 @@ export const getDummyHash = () => (dummyHash ??= hashPassword('dummy-password-pa
 // ---------- JWT HS256 ----------
 const b64url = (b: Buffer | string) => Buffer.from(b).toString('base64url');
 
-export interface JwtPayload { sub: number; name?: string; exp?: number; iat?: number }
+export interface JwtPayload { sub: number; name?: string; rem?: boolean; exp?: number; iat?: number }
 
 export function signJwt(payload: Omit<JwtPayload, 'exp' | 'iat'>, secret: string, ttlSeconds: number): string {
   const now = Math.floor(Date.now() / 1000);

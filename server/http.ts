@@ -129,11 +129,19 @@ export function createHttpHandler(repo: Repo, cfg: HttpConfig, hooks: { onCharac
   const apiLimiter = new RateLimiter(120, 60_000);
   const clientRoot = resolve(cfg.clientDir);
 
-  const cookie = (token: string, maxAge: number) => {
-    const parts = [`${COOKIE}=${token}`, 'Path=/', 'HttpOnly', `Max-Age=${maxAge}`];
+  const REMEMBER_TTL = 30 * 24 * 3600; // "manter conectado": 30 dias, renovados enquanto joga
+  const SESSION_TTL = 24 * 3600;       // sem marcar: cookie de sessão (some ao fechar o navegador)
+  const cookie = (token: string, maxAge: number | null) => {
+    const parts = [`${COOKIE}=${token}`, 'Path=/', 'HttpOnly'];
+    if (maxAge !== null) parts.push(`Max-Age=${maxAge}`);
     if (cfg.crossSite) parts.push('SameSite=None', 'Secure');
     else { parts.push('SameSite=Lax'); if (cfg.prod) parts.push('Secure'); }
     return parts.join('; ');
+  };
+
+  const issue = (res: ServerResponse, id: number, name: string, remember: boolean) => {
+    const ttl = remember ? REMEMBER_TTL : SESSION_TTL;
+    res.setHeader('Set-Cookie', cookie(signJwt({ sub: id, name, rem: remember }, cfg.secret, ttl), remember ? ttl : null));
   };
 
   const requireUser = (req: IncomingMessage) => {
@@ -160,7 +168,7 @@ export function createHttpHandler(repo: Repo, cfg: HttpConfig, hooks: { onCharac
       if (exists.username) throw new HttpError(409, 'Este nome de usuário já está em uso.');
       if (exists.email) throw new HttpError(409, 'Este e-mail já está cadastrado.');
       const id = repo.createUser(username, email, await hashPassword(String(b.password)));
-      res.setHeader('Set-Cookie', cookie(signJwt({ sub: id, name: username }, cfg.secret, cfg.sessionTtl), cfg.sessionTtl));
+      issue(res, id, username, b.remember !== false);
       return send(res, 201, { user: { id, username } });
     }
 
@@ -174,7 +182,7 @@ export function createHttpHandler(repo: Repo, cfg: HttpConfig, hooks: { onCharac
       const user = repo.findUserByLogin(login);
       const ok = await verifyPassword(password, user?.password_hash ?? (await getDummyHash()));
       if (!user || !ok) throw new HttpError(401, 'Usuário ou senha incorretos.');
-      res.setHeader('Set-Cookie', cookie(signJwt({ sub: user.id, name: user.username }, cfg.secret, cfg.sessionTtl), cfg.sessionTtl));
+      issue(res, user.id, user.username, b.remember === true);
       return send(res, 200, { user: { id: user.id, username: user.username } });
     }
 
@@ -185,8 +193,11 @@ export function createHttpHandler(repo: Repo, cfg: HttpConfig, hooks: { onCharac
 
     if (path === '/api/me' && method === 'GET') {
       // 200 com user=null quando deslogado (evita erro 401 no console a cada visita)
-      const uid = userFromRequest(req, cfg.secret);
-      const u = uid ? repo.getUser(uid) : undefined;
+      const token = parseCookies(req.headers.cookie)[COOKIE];
+      const p = token ? verifyJwt(token, cfg.secret) : null;
+      const u = p ? repo.getUser(p.sub) : undefined;
+      // renovação deslizante: sessões "manter conectado" com menos da metade do prazo ganham 30 dias de novo
+      if (u && p?.rem && (p.exp ?? 0) - Date.now() / 1000 < REMEMBER_TTL / 2) issue(res, u.id, u.username, true);
       return send(res, 200, { user: u ? { id: u.id, username: u.username } : null });
     }
 

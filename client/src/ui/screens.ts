@@ -25,6 +25,10 @@ export function initAuth(onLogged: (username: string) => void) {
     fLogin.hidden = !login; fReg.hidden = login;
     (login ? $('#login-user') : $('#reg-user')).focus();
   };
+  // lembra o último usuário usado neste navegador (nunca a senha; essa fica com o gerenciador de senhas)
+  const LAST = 'abyssal:lastLogin';
+  try { const last = localStorage.getItem(LAST); if (last) $<HTMLInputElement>('#login-user').value = last; } catch { /* armazenamento indisponível */ }
+  const remember = (u: string) => { try { localStorage.setItem(LAST, u); } catch { /* ignora */ } };
   tabLogin.onclick = () => select(true);
   tabReg.onclick = () => select(false);
 
@@ -35,8 +39,9 @@ export function initAuth(onLogged: (username: string) => void) {
     if (!login || !password) return setError(fLogin, 'Preencha usuário/e-mail e senha.');
     busy(fLogin, true);
     try {
-      const r = await api('/api/login', { login, password });
+      const r = await api('/api/login', { login, password, remember: $<HTMLInputElement>('#login-remember').checked });
       setError(fLogin, '');
+      remember(login);
       onLogged(r.user.username);
     } catch (err) {
       setError(fLogin, (err as ApiError).message);
@@ -58,8 +63,9 @@ export function initAuth(onLogged: (username: string) => void) {
     if (password !== password2) return bad(3, 'As senhas não coincidem.');
     busy(fReg, true);
     try {
-      const r = await api('/api/register', { username, email, password });
+      const r = await api('/api/register', { username, email, password, remember: true });
       setError(fReg, '');
+      remember(username);
       onLogged(r.user.username);
     } catch (err) {
       setError(fReg, (err as ApiError).message);
