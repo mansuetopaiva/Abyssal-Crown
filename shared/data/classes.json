@@ -1,0 +1,140 @@
+[
+  {
+    "id": "warrior", "name": "Guerreiro", "desc": "Tanque corpo a corpo. Escudos, provocação e golpes em área.",
+    "palette": ["#b8c0cc", "#5a6270", "#c23b3b"], "primary": "str", "startWeapon": "sword", "startOffhand": "shield",
+    "base": { "str": 14, "agi": 7, "int": 4, "vit": 13, "luk": 5 }, "growth": { "str": 2.2, "agi": 0.8, "int": 0.4, "vit": 2, "luk": 0.5 },
+    "skills": [
+      { "id": "whirl", "name": "Golpe Giratório", "desc": "Gira a arma, atingindo todos ao redor.", "type": "aoe_self", "mana": 12, "cd": 4, "mult": 1.5, "radius": 36, "element": "physical" },
+      { "id": "charge", "name": "Investida", "desc": "Avança e atordoa inimigos no caminho.", "type": "dash", "mana": 10, "cd": 7, "mult": 1.2, "dist": 80, "radius": 20, "stun": 1, "element": "physical" },
+      { "id": "taunt", "name": "Grito de Guerra", "desc": "Provoca inimigos próximos e aumenta a armadura em 60%.", "type": "aoe_self", "mana": 15, "cd": 12, "mult": 0, "radius": 110, "taunt": true, "buff": { "armorPct": 0.6 }, "duration": 6, "element": "physical" },
+      { "id": "shieldwall", "name": "Muralha de Escudo", "desc": "Reduz o dano recebido em 50%.", "type": "buff", "mana": 20, "cd": 18, "buff": { "dr": 0.5 }, "duration": 5 }
+    ],
+    "ultimate": { "id": "titan", "name": "Fúria do Titã", "desc": "Golpe sísmico + 80% de dano e 40% de vel. de ataque por 8 s.", "type": "aoe_self", "mana": 40, "cd": 45, "mult": 3, "radius": 60, "stun": 1.2, "buff": { "dmgPct": 0.8, "atkSpd": 0.4 }, "duration": 8, "element": "physical" },
+    "talents": [
+      { "id": "w_str", "name": "Força Bruta", "desc": "+3 Força por ponto.", "max": 5, "stat": "str", "per": 3 },
+      { "id": "w_vit", "name": "Pele de Ferro", "desc": "+3 Vitalidade por ponto.", "max": 5, "stat": "vit", "per": 3 },
+      { "id": "w_armor", "name": "Couraça", "desc": "+12 armadura por ponto.", "max": 5, "stat": "armor", "per": 12 },
+      { "id": "w_whirl", "name": "Lâmina Ciclone", "desc": "+15% de dano do Golpe Giratório.", "max": 5, "skill": "whirl", "per": 0.15 },
+      { "id": "w_charge", "name": "Aríete", "desc": "+15% de dano da Investida.", "max": 5, "skill": "charge", "per": 0.15 },
+      { "id": "w_ls", "name": "Sede de Sangue", "desc": "+1% de roubo de vida.", "max": 5, "stat": "lifesteal", "per": 1 },
+      { "id": "w_hp", "name": "Colosso", "desc": "+40 de vida.", "max": 5, "stat": "hp", "per": 40 },
+      { "id": "w_res", "name": "Juramento", "desc": "+3% em todas as resistências.", "max": 5, "stat": "allRes", "per": 3 },
+      { "id": "w_cdr", "name": "Veterano", "desc": "-3% de recarga.", "max": 5, "stat": "cdr", "per": 3 }
+    ]
+  },
+  {
+    "id": "mage", "name": "Mago", "desc": "Dano elemental em área e mana alta.",
+    "palette": ["#4a5aff", "#2a2a6e", "#ffd23f"], "primary": "int", "startWeapon": "staff",
+    "base": { "str": 4, "agi": 6, "int": 16, "vit": 8, "luk": 6 }, "growth": { "str": 0.4, "agi": 0.8, "int": 2.6, "vit": 1.2, "luk": 0.6 },
+    "skills": [
+      { "id": "fireball", "name": "Bola de Fogo", "desc": "Projétil que explode em área.", "type": "projectile", "mana": 10, "cd": 1.5, "mult": 1.7, "speed": 220, "radius": 28, "range": 200, "element": "fire" },
+      { "id": "frostnova", "name": "Nova Gélida", "desc": "Congela e desacelera inimigos ao redor.", "type": "aoe_self", "mana": 18, "cd": 8, "mult": 1.2, "radius": 60, "slow": 0.5, "slowDur": 3, "element": "ice" },
+      { "id": "chain", "name": "Leque de Raios", "desc": "Dispara 3 raios em leque.", "type": "projectile", "mana": 14, "cd": 4, "mult": 1.1, "speed": 300, "count": 3, "spread": 0.35, "pierce": 2, "range": 180, "element": "lightning" },
+      { "id": "blink", "name": "Teleporte", "desc": "Teleporta-se na direção do cursor.", "type": "dash", "mana": 12, "cd": 6, "mult": 0, "dist": 100, "element": "lightning" }
+    ],
+    "ultimate": { "id": "meteor", "name": "Meteoro", "desc": "Invoca um meteoro devastador no alvo.", "type": "aoe_target", "mana": 50, "cd": 40, "mult": 7, "radius": 64, "range": 200, "delay": 0.9, "element": "fire" },
+    "talents": [
+      { "id": "m_int", "name": "Intelecto", "desc": "+3 Inteligência.", "max": 5, "stat": "int", "per": 3 },
+      { "id": "m_mana", "name": "Poço Arcano", "desc": "+30 de mana.", "max": 5, "stat": "mana", "per": 30 },
+      { "id": "m_fire", "name": "Piromancia", "desc": "+8% de dano de fogo.", "max": 5, "stat": "fireDmg", "per": 8 },
+      { "id": "m_ice", "name": "Criomancia", "desc": "+8% de dano de gelo.", "max": 5, "stat": "iceDmg", "per": 8 },
+      { "id": "m_light", "name": "Eletromancia", "desc": "+8% de dano de raio.", "max": 5, "stat": "lightningDmg", "per": 8 },
+      { "id": "m_fb", "name": "Bola Maior", "desc": "+15% de dano da Bola de Fogo.", "max": 5, "skill": "fireball", "per": 0.15 },
+      { "id": "m_crit", "name": "Foco", "desc": "+1.5% de crítico.", "max": 5, "stat": "crit", "per": 1.5 },
+      { "id": "m_regen", "name": "Meditação", "desc": "+1 mana/s.", "max": 5, "stat": "manaRegen", "per": 1 },
+      { "id": "m_cdr", "name": "Celeridade", "desc": "-3% de recarga.", "max": 5, "stat": "cdr", "per": 3 }
+    ]
+  },
+  {
+    "id": "archer", "name": "Arqueiro", "desc": "Dano à distância, armadilhas e mobilidade.",
+    "palette": ["#4ccf55", "#2a5a2a", "#8a5a2a"], "primary": "agi", "startWeapon": "bow",
+    "base": { "str": 6, "agi": 16, "int": 5, "vit": 9, "luk": 8 }, "growth": { "str": 0.6, "agi": 2.5, "int": 0.5, "vit": 1.3, "luk": 0.8 },
+    "skills": [
+      { "id": "pierce", "name": "Flecha Perfurante", "desc": "Atravessa todos os inimigos em linha.", "type": "projectile", "mana": 8, "cd": 2, "mult": 1.6, "speed": 380, "pierce": 99, "range": 220, "element": "physical" },
+      { "id": "rain", "name": "Chuva de Flechas", "desc": "Flechas caem na área alvo.", "type": "aoe_target", "mana": 16, "cd": 6, "mult": 2.4, "radius": 46, "range": 190, "delay": 0.45, "element": "physical" },
+      { "id": "trap", "name": "Armadilha Explosiva", "desc": "Armadilha que explode ao contato.", "type": "trap", "mana": 12, "cd": 8, "mult": 3, "radius": 40, "duration": 20, "element": "fire" },
+      { "id": "roll", "name": "Salto Evasivo", "desc": "Salta rapidamente na direção do cursor.", "type": "dash", "mana": 6, "cd": 4, "mult": 0, "dist": 80, "element": "physical" }
+    ],
+    "ultimate": { "id": "storm", "name": "Tempestade de Flechas", "desc": "Dispara 16 flechas em todas as direções.", "type": "projectile", "mana": 40, "cd": 35, "mult": 1.6, "speed": 320, "count": 16, "spread": 6.283, "pierce": 3, "range": 200, "element": "physical" },
+    "talents": [
+      { "id": "a_agi", "name": "Reflexos", "desc": "+3 Agilidade.", "max": 5, "stat": "agi", "per": 3 },
+      { "id": "a_crit", "name": "Olho de Águia", "desc": "+1.5% de crítico.", "max": 5, "stat": "crit", "per": 1.5 },
+      { "id": "a_critdmg", "name": "Ponto Fraco", "desc": "+10% de dano crítico.", "max": 5, "stat": "critDmg", "per": 10 },
+      { "id": "a_spd", "name": "Mão Rápida", "desc": "+4% de velocidade de ataque.", "max": 5, "stat": "atkSpd", "per": 4 },
+      { "id": "a_rain", "name": "Céu Fechado", "desc": "+15% de dano da Chuva de Flechas.", "max": 5, "skill": "rain", "per": 0.15 },
+      { "id": "a_trap", "name": "Armadilheiro", "desc": "+20% de dano da Armadilha.", "max": 5, "skill": "trap", "per": 0.2 },
+      { "id": "a_move", "name": "Pés Leves", "desc": "+3% de velocidade de movimento.", "max": 5, "stat": "moveSpd", "per": 3 },
+      { "id": "a_luk", "name": "Fortuna", "desc": "+3 Sorte.", "max": 5, "stat": "luk", "per": 3 },
+      { "id": "a_dmg", "name": "Pontaria", "desc": "+5% de dano.", "max": 5, "stat": "dmgPct", "per": 5 }
+    ]
+  },
+  {
+    "id": "rogue", "name": "Ladino", "desc": "Crítico, furtividade e venenos.",
+    "palette": ["#3a3a4a", "#1a1a24", "#7ad84a"], "primary": "agi", "startWeapon": "dagger",
+    "base": { "str": 8, "agi": 15, "int": 5, "vit": 9, "luk": 10 }, "growth": { "str": 0.8, "agi": 2.4, "int": 0.4, "vit": 1.2, "luk": 1 },
+    "skills": [
+      { "id": "venom", "name": "Golpe Venenoso", "desc": "Golpe que envenena (dano ao longo do tempo).", "type": "arc", "mana": 8, "cd": 2.5, "mult": 1.4, "radius": 26, "arc": 1.6, "poison": 0.6, "poisonDur": 4, "element": "physical" },
+      { "id": "shadowstep", "name": "Passo Sombrio", "desc": "Teleporta e golpeia com sombras.", "type": "dash", "mana": 12, "cd": 6, "mult": 1.8, "dist": 90, "radius": 26, "element": "shadow" },
+      { "id": "stealth", "name": "Furtividade", "desc": "Fica invisível por 4 s; o próximo golpe é crítico.", "type": "stealth", "mana": 15, "cd": 14, "duration": 4 },
+      { "id": "fan", "name": "Leque de Adagas", "desc": "Arremessa 5 adagas envenenadas.", "type": "projectile", "mana": 12, "cd": 5, "mult": 0.9, "speed": 300, "count": 5, "spread": 0.9, "range": 150, "poison": 0.3, "poisonDur": 3, "element": "physical" }
+    ],
+    "ultimate": { "id": "blades", "name": "Dança das Lâminas", "desc": "Golpes sombrios críticos em todos ao redor.", "type": "aoe_self", "mana": 40, "cd": 35, "mult": 5, "radius": 56, "guaranteedCrit": true, "element": "shadow" },
+    "talents": [
+      { "id": "r_agi", "name": "Graça", "desc": "+3 Agilidade.", "max": 5, "stat": "agi", "per": 3 },
+      { "id": "r_crit", "name": "Instinto", "desc": "+2% de crítico.", "max": 5, "stat": "crit", "per": 2 },
+      { "id": "r_critdmg", "name": "Assassino", "desc": "+12% de dano crítico.", "max": 5, "stat": "critDmg", "per": 12 },
+      { "id": "r_venom", "name": "Toxinas", "desc": "+20% de dano do Golpe Venenoso.", "max": 5, "skill": "venom", "per": 0.2 },
+      { "id": "r_shadow", "name": "Umbra", "desc": "+8% de dano de sombra.", "max": 5, "stat": "shadowDmg", "per": 8 },
+      { "id": "r_ls", "name": "Sanguessuga", "desc": "+1% de roubo de vida.", "max": 5, "stat": "lifesteal", "per": 1 },
+      { "id": "r_gold", "name": "Mãos Leves", "desc": "+10% de gold.", "max": 5, "stat": "goldFind", "per": 10 },
+      { "id": "r_spd", "name": "Frenesi", "desc": "+4% de velocidade de ataque.", "max": 5, "stat": "atkSpd", "per": 4 },
+      { "id": "r_move", "name": "Sombra Veloz", "desc": "+3% de velocidade de movimento.", "max": 5, "stat": "moveSpd", "per": 3 }
+    ]
+  },
+  {
+    "id": "cleric", "name": "Clérigo", "desc": "Cura, bênçãos para o grupo e dano sagrado.",
+    "palette": ["#f0e8d0", "#c8a84a", "#ffe9a8"], "primary": "int", "startWeapon": "hammer", "startOffhand": "shield",
+    "base": { "str": 9, "agi": 5, "int": 12, "vit": 12, "luk": 6 }, "growth": { "str": 1, "agi": 0.5, "int": 1.8, "vit": 1.8, "luk": 0.6 },
+    "skills": [
+      { "id": "smite", "name": "Luz Sagrada", "desc": "Raio de luz que atravessa inimigos.", "type": "projectile", "mana": 8, "cd": 1.5, "mult": 1.5, "speed": 280, "pierce": 3, "range": 190, "element": "holy" },
+      { "id": "heal", "name": "Cura em Grupo", "desc": "Cura 30% da vida de aliados próximos.", "type": "heal", "mana": 25, "cd": 10, "heal": 0.3, "radius": 160 },
+      { "id": "bless", "name": "Bênção", "desc": "Grupo ganha +25% de dano e +30% de armadura por 10 s.", "type": "buff", "mana": 20, "cd": 20, "party": true, "radius": 200, "buff": { "dmgPct": 0.25, "armorPct": 0.3 }, "duration": 10 },
+      { "id": "hammer", "name": "Martelo Divino", "desc": "Martelo sagrado cai no alvo e atordoa.", "type": "aoe_target", "mana": 16, "cd": 7, "mult": 2.2, "radius": 36, "range": 170, "delay": 0.4, "stun": 1.2, "element": "holy" }
+    ],
+    "ultimate": { "id": "divine", "name": "Intervenção Divina", "desc": "Cura total do grupo e -50% de dano recebido por 6 s.", "type": "heal", "mana": 50, "cd": 60, "heal": 1, "radius": 240, "buff": { "dr": 0.5 }, "duration": 6, "party": true },
+    "talents": [
+      { "id": "c_int", "name": "Devoção", "desc": "+3 Inteligência.", "max": 5, "stat": "int", "per": 3 },
+      { "id": "c_vit", "name": "Fé Inabalável", "desc": "+3 Vitalidade.", "max": 5, "stat": "vit", "per": 3 },
+      { "id": "c_holy", "name": "Radiância", "desc": "+8% de dano sagrado.", "max": 5, "stat": "holyDmg", "per": 8 },
+      { "id": "c_smite", "name": "Julgamento", "desc": "+15% de dano da Luz Sagrada.", "max": 5, "skill": "smite", "per": 0.15 },
+      { "id": "c_regen", "name": "Graça Divina", "desc": "+2 vida/s.", "max": 5, "stat": "hpRegen", "per": 2 },
+      { "id": "c_mana", "name": "Cálice", "desc": "+25 de mana.", "max": 5, "stat": "mana", "per": 25 },
+      { "id": "c_armor", "name": "Égide", "desc": "+10 armadura.", "max": 5, "stat": "armor", "per": 10 },
+      { "id": "c_res", "name": "Santuário", "desc": "+3% em todas as resistências.", "max": 5, "stat": "allRes", "per": 3 },
+      { "id": "c_cdr", "name": "Litania", "desc": "-3% de recarga.", "max": 5, "stat": "cdr", "per": 3 }
+    ]
+  },
+  {
+    "id": "necro", "name": "Necromante", "desc": "Invoca esqueletos e drena vida.",
+    "palette": ["#3d2a6e", "#140a2a", "#7ad84a"], "primary": "int", "startWeapon": "grimoire",
+    "base": { "str": 5, "agi": 6, "int": 15, "vit": 9, "luk": 6 }, "growth": { "str": 0.5, "agi": 0.7, "int": 2.4, "vit": 1.4, "luk": 0.6 },
+    "skills": [
+      { "id": "bonebolt", "name": "Seta de Osso", "desc": "Projétil sombrio que atravessa.", "type": "projectile", "mana": 8, "cd": 1.2, "mult": 1.4, "speed": 260, "pierce": 2, "range": 190, "element": "shadow" },
+      { "id": "raise", "name": "Erguer Esqueletos", "desc": "Invoca 2 esqueletos por 25 s (máx. 6).", "type": "summon", "mana": 20, "cd": 8, "count": 2, "duration": 25, "mult": 0.5 },
+      { "id": "drain", "name": "Drenar Vida", "desc": "Drena a área alvo e cura 40% do dano causado.", "type": "aoe_target", "mana": 16, "cd": 6, "mult": 1.8, "radius": 42, "range": 170, "delay": 0.2, "drain": 0.4, "element": "shadow" },
+      { "id": "corpse", "name": "Explosão Necrótica", "desc": "Explosão sombria ao redor.", "type": "aoe_self", "mana": 18, "cd": 7, "mult": 2, "radius": 64, "element": "shadow" }
+    ],
+    "ultimate": { "id": "army", "name": "Exército dos Mortos", "desc": "Invoca 6 esqueletos fortes por 15 s.", "type": "summon", "mana": 50, "cd": 50, "count": 6, "duration": 15, "mult": 1 },
+    "talents": [
+      { "id": "n_int", "name": "Sabedoria Profana", "desc": "+3 Inteligência.", "max": 5, "stat": "int", "per": 3 },
+      { "id": "n_shadow", "name": "Treva", "desc": "+8% de dano de sombra.", "max": 5, "stat": "shadowDmg", "per": 8 },
+      { "id": "n_raise", "name": "Ossos Endurecidos", "desc": "+20% de dano dos esqueletos.", "max": 5, "skill": "raise", "per": 0.2 },
+      { "id": "n_drain", "name": "Vampirismo", "desc": "+15% de dano do Drenar Vida.", "max": 5, "skill": "drain", "per": 0.15 },
+      { "id": "n_ls", "name": "Sangue Frio", "desc": "+1% de roubo de vida.", "max": 5, "stat": "lifesteal", "per": 1 },
+      { "id": "n_hp", "name": "Carne Morta", "desc": "+35 de vida.", "max": 5, "stat": "hp", "per": 35 },
+      { "id": "n_mana", "name": "Filactério", "desc": "+25 de mana.", "max": 5, "stat": "mana", "per": 25 },
+      { "id": "n_bolt", "name": "Lança de Osso", "desc": "+15% de dano da Seta de Osso.", "max": 5, "skill": "bonebolt", "per": 0.15 },
+      { "id": "n_cdr", "name": "Ritual", "desc": "-3% de recarga.", "max": 5, "stat": "cdr", "per": 3 }
+    ]
+  }
+]
