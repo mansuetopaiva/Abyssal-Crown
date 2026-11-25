@@ -3,6 +3,7 @@ import { encodeTiles } from '../../shared/dungeon';
 import { moveWithCollision, normalizeDir, type Grid } from '../../shared/movement';
 import { buildTown } from '../../shared/town';
 import type { Player } from './player';
+import { RANKS } from '../../shared/constants';
 
 export const K_PLAYER = 0, K_MONSTER = 1, K_PROJ = 2, K_MINION = 3, K_LOOT = 4, K_BOSS = 5;
 export const F_DEAD = 1, F_STEALTH = 2, F_STUN = 4, F_SLOW = 8, F_POISON = 16, F_ELITE = 32, F_BUFF = 64, F_WINDUP = 128;
@@ -100,7 +101,7 @@ export abstract class World {
         if (o !== p && dx * dx + dy * dy > r2) continue;
         seen.add(o.eid);
         const row: unknown[] = [o.eid, K_PLAYER, Math.round(o.x * 10), Math.round(o.y * 10), Math.round((o.hp / o.stats.maxHp) * 100), this.playerFlags(o)];
-        if (!p.known.has(o.eid)) row.push({ n: o.name, c: o.char.classId, l: o.char.level, cos: o.char.data.cosmetic });
+        if (!p.known.has(o.eid)) { const w = o.char.data.equipment.weapon; row.push({ n: o.name, c: o.char.classId, l: o.char.level, cos: o.char.data.cosmetic, w: w?.baseType, wr: w ? RANKS.indexOf(w.rank) : 0 }); }
         e.push(row);
       }
       this.extraEntities(p, e);

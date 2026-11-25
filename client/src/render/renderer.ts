@@ -5,7 +5,7 @@ import bosses from '../../../shared/data/bosses.json';
 import { CLASS_BY_ID } from '../../../shared/stats';
 import { buildTown } from '../../../shared/town';
 import { Pool } from './pool';
-import { sprite, tileset, TOWN_BIOME, type TileSet } from './sprites';
+import { itemIcon, sprite, tileset, TOWN_BIOME, type TileSet } from './sprites';
 
 export interface Ent {
   id: number; kind: number; x: number; y: number; hp: number; flags: number; meta: Record<string, any>;
@@ -19,6 +19,16 @@ export const F_DEAD = 1, F_STEALTH = 2, F_STUN = 4, F_SLOW = 8, F_POISON = 16, F
 const MONSTER_DEF: Record<string, { shape: string; palette: string[] }> = Object.fromEntries(
   [...monsters, ...bosses].map((m) => [m.id, { shape: m.shape, palette: m.palette }]),
 );
+function radial(stops: [number, string][]): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d')!;
+  const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  for (const [o, col] of stops) gr.addColorStop(o, col);
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 128, 128);
+  return c;
+}
 const elemColor = (i: number) => ELEMENT_COLOR[ELEMENTS[i] ?? 'physical'];
 const CHUNK = 16;
 
@@ -43,6 +53,12 @@ export class Renderer {
   ts: TileSet = tileset(-1);
   private chunks = new Map<number, HTMLCanvasElement>();
   private vignette: HTMLCanvasElement | null = null;
+  private lightC: HTMLCanvasElement | null = null;
+  private lightG: CanvasRenderingContext2D | null = null;
+  private lightSprite = radial([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,255,255,0.8)'], [1, 'rgba(255,255,255,0)']]);
+  private glowSprite = radial([[0, 'rgba(255,170,80,0.9)'], [0.5, 'rgba(255,120,40,0.25)'], [1, 'rgba(255,90,20,0)']]);
+  torches: { x: number; y: number; seed: number }[] = [];
+  selfAim = 0;
   texts = new Pool<Txt>(() => ({ active: false, x: 0, y: 0, vy: 0, life: 0, max: 0, text: '', color: '', size: 0 }), 160);
   parts = new Pool<Part>(() => ({ active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 0, color: '', size: 1, grav: 0 }), 700);
   fx = new Pool<Fx>(() => ({ active: false, type: '', x: 0, y: 0, x2: 0, y2: 0, r: 0, a: 0, len: 0, wid: 0, life: 0, max: 0, color: '', hostile: false, shape: 0 }), 260);
@@ -72,6 +88,16 @@ export class Renderer {
     this.ts = tileset(m.world === 'town' ? -1 : m.biome); // carregamento preguiçoso por bioma
     this.chunks.clear();
     this.texts.clear(); this.parts.clear(); this.fx.clear();
+    // tochas nas faces de parede (determinístico por posição)
+    this.torches = [];
+    for (let y = 1; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) {
+      if (m.tiles[y * m.w + x] === T_FLOOR || m.tiles[(y + 1) * m.w + x] !== T_FLOOR) continue;
+      const hsh = (Math.imul(x, 73856093) ^ Math.imul(y, 19349663)) >>> 0;
+      if (hsh % (m.world === 'town' ? 5 : 9) !== 0) continue;
+      const tx = (x + 0.5) * TILE, ty = y * TILE + 9;
+      if (this.torches.some((t) => Math.abs(t.x - tx) < TILE * 4 && Math.abs(t.y - ty) < TILE * 3)) continue;
+      this.torches.push({ x: tx, y: ty, seed: hsh % 1000 });
+    }
   }
 
   setTile(x: number, y: number, v: number) {
@@ -98,7 +124,15 @@ export class Renderer {
         let hsh = (x * 374761393 + y * 668265263) | 0;
         hsh = Math.imul(hsh ^ (hsh >>> 13), 1274126177);
         const r = ((hsh ^ (hsh >>> 16)) >>> 0) % 100;
-        img = this.ts.floor[r < 6 ? 2 : r < 30 ? 1 : 0];
+        g.drawImage(this.ts.floor[r < 5 ? 2 : r < 18 ? 3 : r < 45 ? 1 : 0], tx * TILE, ty * TILE);
+        // oclusão ambiente: sombra projetada pelas paredes vizinhas
+        const solid = (xx: number, yy: number) => xx < 0 || yy < 0 || xx >= m.w || yy >= m.h || m.tiles[yy * m.w + xx] !== T_FLOOR;
+        const X = tx * TILE, Y = ty * TILE;
+        if (solid(x, y - 1)) { g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(X, Y, TILE, 3); g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(X, Y + 3, TILE, 3); }
+        if (solid(x - 1, y)) { g.fillStyle = 'rgba(0,0,0,0.28)'; g.fillRect(X, Y, 2, TILE); }
+        if (solid(x + 1, y)) { g.fillStyle = 'rgba(0,0,0,0.2)'; g.fillRect(X + TILE - 2, Y, 2, TILE); }
+        if (solid(x, y + 1)) { g.fillStyle = 'rgba(0,0,0,0.15)'; g.fillRect(X, Y + TILE - 1, TILE, 1); }
+        continue;
       }
       else {
         const below = y + 1 < m.h ? m.tiles[(y + 1) * m.w + x] : 0;
@@ -215,6 +249,18 @@ export class Renderer {
       this.drawTown(g, P, Q, visible);
     }
 
+    // tochas com chama tremulante
+    for (const t of this.torches) {
+      if (!visible(t.x, t.y)) continue;
+      const f = this.flick(t.seed);
+      g.fillStyle = '#1a120a'; g.fillRect(P(t.x - 1), Q(t.y - 2), 2 * z, 5 * z);
+      g.fillStyle = '#5a4a3a'; g.fillRect(P(t.x - 2), Q(t.y + 2), 4 * z, z);
+      g.fillStyle = '#ff6a1e'; g.fillRect(P(t.x - 1.5), Q(t.y - 4 - f), 3 * z, (3 + f) * z);
+      g.fillStyle = '#ffc84a'; g.fillRect(P(t.x - 0.8), Q(t.y - 3.5 - f * 0.7), 1.6 * z, (2.2 + f * 0.6) * z);
+      g.fillStyle = '#fff4c8'; g.fillRect(P(t.x - 0.4), Q(t.y - 2.6), 0.8 * z, z);
+      if (Math.random() < 0.04) this.burst(t.x, t.y - 4, '#ffb04a', 1, 10, 0.8, 0.9, -30);
+    }
+
     // telegrafias (embaixo das entidades)
     for (const f of this.fx.live) if (f.type === 'tg') this.drawTele(g, f, P, Q, z);
 
@@ -243,10 +289,14 @@ export class Renderer {
     g.globalAlpha = 1;
     this.parts.sweep();
 
-    // iluminação: vinheta escura (dark fantasy)
-    if (m.world === 'dungeon') {
+    // iluminação dinâmica (dungeon) / vinheta suave (cidade)
+    if (m.world === 'dungeon') this.drawLighting(g, list, selfId, P, Q, visible);
+    else {
       if (!this.vignette) this.vignette = this.makeVignette();
-      g.drawImage(this.vignette, 0, 0);
+      g.globalAlpha = 0.5; g.drawImage(this.vignette, 0, 0); g.globalAlpha = 1;
+      g.globalCompositeOperation = 'lighter';
+      for (const t of this.torches) if (visible(t.x, t.y)) { const R = 26 * z; g.globalAlpha = 0.18 * this.flick(t.seed); g.drawImage(this.glowSprite, P(t.x) - R, Q(t.y) - R, 2 * R, 2 * R); }
+      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
     }
 
     // textos de dano
@@ -266,6 +316,79 @@ export class Renderer {
     }
     g.globalAlpha = 1;
     this.texts.sweep();
+  }
+
+  private flick(seed: number) {
+    const t = this.time;
+    return 0.85 + Math.sin(t * 11 + seed) * 0.09 + Math.sin(t * 23.7 + seed * 1.7) * 0.06;
+  }
+
+  /** Mapa de luz em meia resolução: escuridão com "furos" nas fontes de luz, depois brilho aditivo quente. */
+  private drawLighting(g: CanvasRenderingContext2D, list: Ent[], selfId: number, P: (x: number) => number, Q: (y: number) => number, visible: (x: number, y: number, pad?: number) => boolean) {
+    const D = 2, z = this.zoom;
+    const lw = Math.ceil(this.w / D), lh = Math.ceil(this.h / D);
+    if (!this.lightC || this.lightC.width !== lw || this.lightC.height !== lh) {
+      this.lightC = document.createElement('canvas');
+      this.lightC.width = lw; this.lightC.height = lh;
+      this.lightG = this.lightC.getContext('2d')!;
+    }
+    const lg = this.lightG!;
+    const dark = [0.86, 0.8, 0.83, 0.74, 0.88][this.map!.biome] ?? 0.88;
+    lg.globalCompositeOperation = 'source-over';
+    lg.globalAlpha = 1;
+    lg.clearRect(0, 0, lw, lh);
+    lg.fillStyle = `rgba(3,2,8,${dark})`;
+    lg.fillRect(0, 0, lw, lh);
+    lg.globalCompositeOperation = 'destination-out';
+    const add = (x: number, y: number, r: number, a: number) => {
+      if (!visible(x, y, r)) return;
+      const s = (r * z) / D;
+      lg.globalAlpha = Math.max(0, Math.min(1, a));
+      lg.drawImage(this.lightSprite, P(x) / D - s, Q(y) / D - s, s * 2, s * 2);
+    };
+    for (const e of list) {
+      if (e.kind === K_PLAYER) add(e.x, e.y, e.id === selfId ? 125 : 90, e.id === selfId ? 1 : 0.85);
+      else if (e.kind === K_PROJ) add(e.x, e.y, 30, 0.8);
+      else if (e.kind === K_BOSS) add(e.x, e.y, 55, 0.5);
+      else if (e.kind === K_LOOT && (e.meta.r ?? 0) >= 4) add(e.x, e.y, 24, 0.7);
+      else if (e.kind === K_MINION) add(e.x, e.y, 30, 0.4);
+    }
+    for (const t of this.torches) add(t.x, t.y, 80 * this.flick(t.seed), 0.95);
+    for (const f of this.fx.live) {
+      if (f.type === 'ring' || f.type === 'beam') add(f.x, f.y, (f.r || 30) * 1.8 + 20, 1 - f.life / f.max);
+      else if (f.type === 'tg') add(f.x, f.y, (f.r || 40) + 10, 0.35);
+    }
+    const st = this.map!.stairs;
+    if (st?.open) add((st.x + 0.5) * TILE, (st.y + 0.5) * TILE, 40, 0.7);
+    lg.globalCompositeOperation = 'source-over';
+    lg.globalAlpha = 1;
+    g.imageSmoothingEnabled = true;
+    g.drawImage(this.lightC, 0, 0, lw * D, lh * D);
+    g.imageSmoothingEnabled = false;
+    // brilho quente aditivo das tochas e projéteis
+    g.globalCompositeOperation = 'lighter';
+    for (const t of this.torches) {
+      if (!visible(t.x, t.y, 60)) continue;
+      const R = 44 * z;
+      g.globalAlpha = 0.22 * this.flick(t.seed);
+      g.drawImage(this.glowSprite, P(t.x) - R, Q(t.y) - R, R * 2, R * 2);
+    }
+    for (const e of list) if (e.kind === K_PROJ) { const R = 12 * z; g.globalAlpha = 0.3; g.drawImage(this.glowSprite, P(e.x) - R, Q(e.y) - R, R * 2, R * 2); }
+    g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 1;
+  }
+
+  private drawWeapon(g: CanvasRenderingContext2D, e: Ent, aim: number, P: (x: number) => number, Q: (y: number) => number, z: number) {
+    const w = e.meta.w as string | undefined;
+    if (!w) return;
+    const rank = RANKS[e.meta.wr ?? 0] ?? 'F';
+    const icon = itemIcon('weapon', w, RANK_INFO[rank].color);
+    const hx = e.x + Math.cos(aim) * 5, hy = e.y - 3 + Math.sin(aim) * 3;
+    g.save();
+    g.translate(P(hx), Q(hy));
+    g.rotate(aim + Math.PI / 4);
+    g.drawImage(icon, -5 * z, -5 * z, 10 * z, 10 * z);
+    g.restore();
   }
 
   private makeVignette() {
@@ -391,13 +514,19 @@ export class Renderer {
           const col = cos === 'aura_fire' ? '#ff7a2e' : cos === 'aura_void' ? '#b07cff' : cos === 'aura_gold' ? '#ffd23f' : `hsl(${(t * 120) % 360},90%,60%)`;
           if (Math.random() < 0.4) this.burst(e.x + (Math.random() - 0.5) * 10, e.y + 4, col, 1, 12, 1, 0.9, -25);
         }
+        const aim = self ? this.selfAim : e.face > 0 ? -0.5 : Math.PI + 0.5;
+        const hidden = dead || (e.flags & F_STEALTH) !== 0;
+        if (!isMinion && !hidden && Math.sin(aim) < 0) this.drawWeapon(g, e, aim, P, Q, z);
         g.save();
         if (dead) g.globalAlpha = 0.35;
         if (e.flags & F_STEALTH) g.globalAlpha = self ? 0.45 : 0.15;
         g.translate(P(e.x), Q(e.y - 4 + bob));
         if (e.face < 0) g.scale(-1, 1);
-        g.drawImage(img, (-size / 2) * z, (-size / 2) * z, size * z, size * z);
+        // leve "esmagamento" ao andar
+        const sq = 1 + Math.sin(e.bob * 2) * 0.03;
+        g.drawImage(img, (-size / 2) * z, (-size / 2) * z * sq, size * z, size * z * sq);
         g.restore();
+        if (!isMinion && !hidden && Math.sin(aim) >= 0) this.drawWeapon(g, e, aim, P, Q, z);
         if (e.flags & F_BUFF) { g.strokeStyle = '#ffd23f80'; g.lineWidth = z; g.beginPath(); g.ellipse(P(e.x), Q(e.y + 5), 7 * z, 3 * z, 0, 0, 7); g.stroke(); }
         if (!isMinion) {
           g.font = `${4 * z}px Georgia, serif`;

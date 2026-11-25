@@ -14,9 +14,9 @@ gerados proceduralmente, com chefes a cada 10 andares.
 | Monstros | 30 tipos, 5 comportamentos (corpo a corpo, à distância, conjurador, investida, explosivo), modificadores Elite / Veloz / Venenoso / Blindado / Vampírico / Explosivo |
 | Chefes | 10 chefes únicos com título, barra de vida, fases a 50% e 20%, ataques telegrafados, HP escala com o tamanho do grupo |
 | Itens | Ranks F→SSS com as chances pedidas, 0 a 6 atributos aleatórios, 10 itens SSS lendários com efeito único e anúncio no chat, 11 tipos de arma, 9 slots |
-| Classes | Guerreiro, Mago, Arqueiro, Ladino, Clérigo e Necromante — 4 habilidades + ultimate, 9 talentos cada, 5 atributos base |
-| Economia | Gold e Gemas; Ferreiro (comprar, refinar +1..+15, reparar), Alquimista, Joalheira (gemas de engaste, combinar), Mercado entre jogadores com taxa de 5%, loja de gemas, missões diárias, conquistas, log de todas as transações |
-| Interface | HUD (vida, mana, XP, habilidades com recarga, minimapa, andar), textos de dano coloridos (crítico maior e amarelo), partículas em drops raros, ranking global, controles de teclado/mouse e toque |
+| Classes | Guerreiro, Mago, Arqueiro, Ladino, Clérigo e Necromante — 4 habilidades + ultimate liberadas por nível (1, 3, 6, 10 e 15), 9 talentos cada, 5 atributos base |
+| Economia | Gold e Gemas; venda ao mercador (item a item ou em lote por rank), Ferreiro (comprar, refinar +1..+15, reparar), Alquimista, Joalheira (gemas de engaste, combinar), Mercado entre jogadores com taxa de 5%, loja de gemas, missões diárias, conquistas, log de todas as transações |
+| Interface | Iluminação dinâmica com tochas, sprites sombreados, inventário sempre ordenado por rank, HUD (vida, mana, XP, habilidades com recarga, minimapa, andar), textos de dano coloridos (crítico maior e amarelo), partículas em drops raros, ranking global, controles de teclado/mouse e toque |
 
 ## Stack
 
@@ -57,7 +57,7 @@ Para testar o multiplayer, abra uma segunda janela anônima e crie outra conta.
 | Comando | O que faz |
 |---|---|
 | `npm run dev` | Compila o cliente e sobe o servidor com recarga automática |
-| `npm test` | Testes unitários e de integração (drops, dano, autenticação, gerador de andares, HTTP + WebSocket) |
+| `npm test` | Testes unitários e de integração (drops, dano, autenticação, gerador de andares, inventário, HTTP + WebSocket) |
 | `node scripts/e2e.mjs` | Teste no navegador com Playwright: cadastro, dois jogadores, chat, dungeon, FPS (precisa de `npx playwright install chromium`) |
 | `npm run typecheck` | Verificação de tipos |
 | `npm run build && npm start` | Build e execução de produção |

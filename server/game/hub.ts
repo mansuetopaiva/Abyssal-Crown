@@ -198,6 +198,7 @@ export class Hub implements HubApi {
       case 'unequip': return this.reply(p, isSlot(m.slot) ? unequip(p.char, m.slot) : { ok: false, msg: 'Slot inválido.' }, true);
       case 'sort': sortInventory(p.char); return this.reply(p, { ok: true }, false);
       case 'sell': return this.sell(p, num(m.idx));
+      case 'sellBulk': return this.sellBulk(p, num(m.max));
       case 'talent': return this.talent(p, str(m.id, 20));
       case 'shop': return this.shop(p, m);
       case 'market': return this.market(p, m);
@@ -216,7 +217,11 @@ export class Hub implements HubApi {
   private reply(p: Player, r: Result, recompute: boolean) {
     if (!r.ok) return p.toast(r.msg, 'error');
     if (r.msg) p.toast(r.msg, 'good');
-    if (recompute) p.recompute();
+    if (recompute) {
+      p.recompute();
+      // a arma pode ter mudado: reenvia os dados visuais deste jogador aos outros
+      if (p.world) for (const o of p.world.players) if (o !== p) o.known.delete(p.eid);
+    }
     p.dirty = true;
     p.sendChar();
   }
@@ -335,6 +340,25 @@ export class Hub implements HubApi {
     c.gold += price;
     this.repo.logTx(c.id, 'sell', price, 0, `${it.name} [${it.rank}]`);
     this.reply(p, { ok: true, msg: `Vendido por ${price} gold.` }, false);
+  }
+
+  /** Vende ao mercador todos os itens do inventário até o rank indicado (0=F … 4=B). */
+  private sellBulk(p: Player, maxRank: number) {
+    if (p.world !== this.town) return p.toast('Venda itens na cidade.', 'error');
+    if (!Number.isInteger(maxRank) || maxRank < 0 || maxRank > 4) return;
+    const c = p.char;
+    let total = 0, n = 0;
+    for (let i = 0; i < c.data.invSlots; i++) {
+      const it = c.data.inventory[i];
+      if (!it || RANKS.indexOf(it.rank) > maxRank) continue;
+      total += sellPrice(it);
+      n++;
+      c.data.inventory[i] = null;
+    }
+    if (!n) return p.toast('Nenhum item desses ranks para vender.', 'info');
+    c.gold += total;
+    this.repo.logTx(c.id, 'sell_bulk', total, 0, `${n} itens até rank ${RANKS[maxRank]}`);
+    this.reply(p, { ok: true, msg: `${n} itens vendidos por ${total} gold.` }, false);
   }
 
   private talent(p: Player, id: string) {

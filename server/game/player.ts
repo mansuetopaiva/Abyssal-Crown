@@ -3,6 +3,7 @@ import { computeStats, CLASS_BY_ID, allSkills } from '../../shared/stats';
 import type { Character, Stats } from '../../shared/types';
 import type { World } from './world';
 import type { Party } from './party';
+import { sortInventory } from './inventory';
 
 let nextEntityId = 1;
 export const newEntityId = () => nextEntityId++;
@@ -80,6 +81,7 @@ export class Player {
   /** Atualização completa do personagem (inventário, equipamentos etc.). */
   sendChar() {
     const c = this.char;
+    sortInventory(c); // inventário sempre ordenado por rank
     this.send({ t: 'char', char: { id: c.id, name: c.name, classId: c.classId, level: c.level, xp: c.xp, gold: c.gold, gems: c.gems, maxFloor: c.maxFloor, checkpoint: c.checkpoint, data: c.data }, stats: this.stats });
   }
 

@@ -1,11 +1,11 @@
-import { ATTR_LABEL, ATTRS, CHECKPOINT_EVERY, ELEMENT_LABEL, ELEMENTS, RANK_INFO, RANKS, SLOT_LABEL, SLOTS, xpForLevel, type Slot } from '../../../shared/constants';
+import { SKILL_UNLOCK_LEVELS, ATTR_LABEL, ATTRS, CHECKPOINT_EVERY, ELEMENT_LABEL, ELEMENTS, RANK_INFO, RANKS, SLOT_LABEL, SLOTS, xpForLevel, type Slot } from '../../../shared/constants';
 import { GEM_SHOP, MAX_GEM_TIER, combineCost, gemPrice, parseGemKey, potionPrice, refineChance, refineCost, repairCost, unsocketCost } from '../../../shared/economy';
 import { AFFIX_BY_STAT, SOCKET_GEMS, UNIQUES, WEAPONS } from '../../../shared/loot';
 import { CLASS_BY_ID, allSkills, itemBonuses, itemPower } from '../../../shared/stats';
 import type { Item } from '../../../shared/types';
 import { api } from '../api';
 import { $, fmt, h } from '../dom';
-import { itemIcon } from '../render/sprites';
+import { itemIconUrl } from '../render/sprites';
 import type { Game } from '../game';
 
 const SLOT_TYPE_LABEL: Record<string, string> = { weapon: 'Arma', offhand: 'Secundária', helm: 'Elmo', armor: 'Armadura', gloves: 'Luvas', boots: 'Botas', amulet: 'Amuleto', ring: 'Anel' };
@@ -150,7 +150,7 @@ export class Panels {
     const el = h('button', { class: `slot${it ? ' filled' : ''}${it?.rank === 'SSS' ? ' sss' : ''}${this.selected === ref ? ' selected' : ''}`, 'aria-label': it ? `${it.name} rank ${it.rank}` : label || 'Vazio' });
     if (it) {
       el.style.borderColor = rankColor(it.rank);
-      el.append(itemIcon(it.slotType, it.baseType, RANK_INFO[it.rank].color));
+      el.append(h('img', { src: itemIconUrl(it.slotType, it.baseType, RANK_INFO[it.rank].color), alt: '', draggable: 'false' }));
       el.append(h('span', { class: 'rk', style: { color: rankColor(it.rank) }, text: it.rank }));
       if (it.refine) el.append(h('span', { class: 'ref', text: `+${it.refine}` }));
       el.onmouseenter = (e) => this.showTip(it, e, opts.compare ? this.equippedFor(it) : null);
@@ -194,9 +194,7 @@ export class Panels {
     const c = this.c, s = this.g.stats!;
     const sel = this.selectedItem();
     const inTown = this.g.map?.world === 'town';
-    const actions = h('div', { class: 'inv-actions' },
-      h('button', { class: 'btn small', onclick: () => this.g.send({ t: 'sort' }) }, 'Ordenar por rank'),
-    );
+    const actions = h('div', { class: 'inv-actions' });
     if (sel && this.selected!.startsWith('inv:')) {
       const idx = Number(this.selected!.split(':')[1]);
       actions.append(h('button', { class: 'btn small gold', onclick: () => { this.g.send({ t: 'equip', idx }); this.selected = null; } }, 'Equipar'));
@@ -220,7 +218,7 @@ export class Panels {
     return [h('div', { class: 'inv-layout' },
       h('div', null, this.equipPane(), dl),
       h('div', null,
-        h('p', { class: 'muted', text: `Clique para selecionar · duplo clique para equipar · ${c.data.inventory.filter(Boolean).length}/${c.data.invSlots} espaços` }),
+        h('p', { class: 'muted', text: `Ordenado por rank · clique para selecionar · duplo clique para equipar · ${c.data.inventory.filter(Boolean).length}/${c.data.invSlots} espaços` }),
         this.invGrid({ dbl: (i) => this.g.send({ t: 'equip', idx: i }) }),
         actions,
       ),
@@ -238,7 +236,11 @@ export class Panels {
     return [
       h('p', null, h('b', { text: `${c.name} — ${cls.name} nível ${c.level}` }), ' ', h('span', { class: 'muted', text: `XP ${fmt(c.xp)}/${fmt(xpForLevel(c.level))} · Andar máx. ${c.maxFloor} · Checkpoint ${c.checkpoint}` })),
       h('h3', { text: 'Habilidades' }),
-      h('div', { class: 'skill-desc' }, ...allSkills(cls).map((sk, i) => h('div', null, h('b', { text: `[${i === 4 ? 'R' : i + 1}] ${sk.name}` }), h('br'), sk.desc, h('br'), h('span', { class: 'muted', text: `${sk.mana} mana · recarga ${sk.cd}s` })))),
+      h('div', { class: 'skill-desc' }, ...allSkills(cls).map((sk, i) => {
+        const locked = c.level < SKILL_UNLOCK_LEVELS[i];
+        return h('div', { class: locked ? 'locked' : '' }, h('b', { text: `${locked ? '🔒 ' : ''}[${i === 4 ? 'R' : i + 1}] ${sk.name}` }), h('br'), sk.desc, h('br'),
+          h('span', { class: 'muted', text: locked ? `Liberada no nível ${SKILL_UNLOCK_LEVELS[i]}` : `${sk.mana} mana · recarga ${sk.cd}s` }));
+      })),
       h('h3', { text: `Talentos — ${free} ponto(s) livre(s)` }),
       h('div', { class: 'talent-grid' }, ...cls.talents.map((t) => {
         const r = c.data.talents[t.id] ?? 0;
@@ -374,8 +376,31 @@ export class Panels {
 
   // ---------- mercado ----------
   render_market() {
-    const tabs = this.subtabs([['browse', 'Comprar'], ['sell', 'Anunciar'], ['gems', 'Loja de Gemas']], 'browse');
+    const tabs = this.subtabs([['merchant', 'Vender ao mercador'], ['browse', 'Comprar de jogadores'], ['sell', 'Anunciar para jogadores'], ['gems', 'Loja de Gemas']], 'merchant');
     const c = this.c;
+    if (this.sub === 'merchant') {
+      const sel = this.selectedItem();
+      const inv = (c.data.inventory as (Item | null)[]).filter(Boolean) as Item[];
+      const priceOf = (it: Item) => Math.floor(it.value * (1 + it.refine * 0.15));
+      const sumUpTo = (r: number) => inv.filter((it) => RANKS.indexOf(it.rank) <= r).reduce((a, it) => a + priceOf(it), 0);
+      const countUpTo = (r: number) => inv.filter((it) => RANKS.indexOf(it.rank) <= r).length;
+      const bulk = h('div', { class: 'inv-actions' }, ...[0, 1, 2, 3].map((r) => {
+        const n = countUpTo(r);
+        return h('button', {
+          class: 'btn small', disabled: !n,
+          onclick: () => { if (confirm(`Vender ${n} item(ns) de rank ${RANKS.slice(0, r + 1).join(', ')} por ${fmt(sumUpTo(r))} gold?`)) this.g.send({ t: 'sellBulk', max: r }); },
+        }, `Vender tudo ${r === 0 ? 'F' : `F até ${RANKS[r]}`} (${n} · ◉ ${fmt(sumUpTo(r))})`);
+      }));
+      const one = h('div', { class: 'inv-actions' });
+      if (sel && this.selected!.startsWith('inv:')) {
+        const idx = Number(this.selected!.split(':')[1]);
+        one.append(itemName(sel), h('button', {
+          class: 'btn small gold',
+          onclick: () => { if (RANKS.indexOf(sel.rank) >= 5 && !confirm(`Vender ${sel.name} [${sel.rank}]?`)) return; this.g.send({ t: 'sell', idx }); this.selected = null; },
+        }, `Vender por ◉ ${fmt(priceOf(sel))}`));
+      } else one.append(h('span', { class: 'muted', text: 'Selecione um item para vender, ou venda em lote:' }));
+      return [tabs, h('p', { class: 'muted', text: 'O mercador compra qualquer item na hora. Itens equipados não são vendidos.' }), this.invGrid({ compare: true }), one, bulk];
+    }
     if (this.sub === 'browse') {
       return [tabs, h('p', { class: 'muted', text: 'Taxa de 5% sobre cada venda, paga pelo vendedor.' }), this.listings.length ? h('ul', { class: 'list' }, ...this.listings.map((l) => h('li', null,
         this.slotEl(l.item, `mk:${l.id}`, '', { compare: true }),

@@ -1,7 +1,7 @@
 import monstersData from '../../shared/data/monsters.json';
 import bossesData from '../../shared/data/bosses.json';
 import {
-  BIOMES, CHECKPOINT_EVERY, ELEMENTS, RANKS, TICK_RATE, TILE, floorScaling, isBossFloor, type Element,
+  BIOMES, CHECKPOINT_EVERY, ELEMENTS, RANKS, SKILL_UNLOCK_LEVELS, TICK_RATE, TILE, floorScaling, isBossFloor, skillUnlocked, type Element,
 } from '../../shared/constants';
 import { computeDamage } from '../../shared/combat';
 import { encodeTiles, generateFloor, T_FLOOR, T_SECRET, type FloorMap } from '../../shared/dungeon';
@@ -553,8 +553,12 @@ export class Dungeon extends World {
       c.data.stats.kills++;
       c.data.daily.kills++;
       if (m.boss) c.data.stats.bossKills++;
+      const before = c.level;
       const ups = grantXp(c, m.xp * (m.isAdd ? 0.3 : 1));
       if (ups) {
+        p.skills.forEach((sk, i) => {
+          if (before < SKILL_UNLOCK_LEVELS[i] && c.level >= SKILL_UNLOCK_LEVELS[i]) p.toast(`Nova habilidade: ${sk.name}!`, 'good');
+        });
         p.recompute();
         p.hp = p.stats.maxHp; p.mana = p.stats.maxMana;
         this.emit(['lv', p.x, p.y]);
@@ -747,6 +751,7 @@ export class Dungeon extends World {
     const t = this.time;
     const sk = p.skills[idx] as SkillDef | undefined;
     if (!sk || p.dead || p.stunUntil > t || !Number.isFinite(a)) return;
+    if (!skillUnlocked(p.char.level, idx)) { p.toast(`${sk.name} é liberada no nível ${SKILL_UNLOCK_LEVELS[idx]}.`, 'error'); return; }
     if ((p.cds[sk.id] ?? 0) > t) return;
     if (p.mana < sk.mana) { p.toast('Mana insuficiente.', 'error'); return; }
     p.mana -= sk.mana;

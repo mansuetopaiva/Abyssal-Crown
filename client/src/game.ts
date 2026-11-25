@@ -1,4 +1,4 @@
-import { BIOMES, TICK_MS, TICK_RATE, TILE, xpForLevel } from '../../shared/constants';
+import { BIOMES, SKILL_UNLOCK_LEVELS, TICK_MS, TICK_RATE, TILE, skillUnlocked, xpForLevel } from '../../shared/constants';
 import { decodeTiles, T_FLOOR } from '../../shared/dungeon';
 import { moveWithCollision } from '../../shared/movement';
 import { allSkills, CLASS_BY_ID } from '../../shared/stats';
@@ -240,6 +240,7 @@ export class Game {
       if (!this.touchMode) self.face = wx >= self.x ? 1 : -1;
     }
 
+    if (this.map?.world === 'dungeon' || !this.touchMode) this.r.selfAim = this.aimAngle();
     // câmera segue o jogador
     this.r.camX = this.prevPx + (this.px - this.prevPx) * alpha;
     this.r.camY = this.prevPy + (this.py - this.prevPy) * alpha;
@@ -324,6 +325,7 @@ export class Game {
   skill(i: number) {
     if (this.map?.world !== 'dungeon' || !this.char) return;
     const sk = allSkills(CLASS_BY_ID[this.char.classId])[i];
+    if (!skillUnlocked(this.char.level, i)) { this.toast(`${sk.name} é liberada no nível ${SKILL_UNLOCK_LEVELS[i]}.`, 'error'); return; }
     const cd = this.cds.get(sk.id);
     if (cd && cd.until > performance.now()) return;
     const [x, y] = this.aimPoint();
@@ -498,14 +500,19 @@ export class Game {
     $('#pot-mp').textContent = String(c.data.consumables.manaPotion);
     this.bar('.bar.xp', c.xp, xpForLevel(c.level), false);
     const bar = $('#skillbar');
-    if (bar.dataset.cls !== c.classId) {
-      bar.dataset.cls = c.classId;
-      bar.replaceChildren(...allSkills(cls).map((s, i) =>
-        h('button', {
-          class: `skill${i === 4 ? ' ult' : ''}`, 'data-id': s.id, 'data-mana': s.mana, title: `${s.name} — ${s.desc} (${s.mana} mana, ${s.cd}s)`,
-          'aria-label': `${s.name}, tecla ${i === 4 ? 'R' : i + 1}`, onclick: () => this.skill(i),
-        }, h('span', { class: 'key', text: i === 4 ? 'R' : String(i + 1) }), s.name, h('span', { class: 'cd' }), h('span', { class: 'cdt' })),
-      ));
+    const unlocked = SKILL_UNLOCK_LEVELS.filter((lv) => c.level >= lv).length;
+    const barKey = `${c.classId}:${unlocked}`;
+    if (bar.dataset.key !== barKey) {
+      bar.dataset.key = barKey;
+      bar.replaceChildren(...allSkills(cls).map((s, i) => {
+        const locked = !skillUnlocked(c.level, i);
+        return h('button', {
+          class: `skill${i === 4 ? ' ult' : ''}${locked ? ' locked' : ''}`, 'data-id': s.id, 'data-mana': s.mana,
+          title: locked ? `${s.name} — liberada no nível ${SKILL_UNLOCK_LEVELS[i]}` : `${s.name} — ${s.desc} (${s.mana} mana, ${s.cd}s)`,
+          'aria-label': `${s.name}, tecla ${i === 4 ? 'R' : i + 1}${locked ? `, bloqueada até o nível ${SKILL_UNLOCK_LEVELS[i]}` : ''}`, onclick: () => this.skill(i),
+        }, h('span', { class: 'key', text: i === 4 ? 'R' : String(i + 1) }), locked ? '🔒' : s.name,
+          locked ? h('span', { class: 'lock', text: `Nv ${SKILL_UNLOCK_LEVELS[i]}` }) : null, h('span', { class: 'cd' }), h('span', { class: 'cdt' }));
+      }));
     }
   }
 

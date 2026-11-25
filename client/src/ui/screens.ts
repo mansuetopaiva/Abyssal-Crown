@@ -99,7 +99,7 @@ export async function showCharacters(username: string, onPlay: (charId: number) 
     list.replaceChildren();
     for (const c of chars) {
       const cls = CLASS_BY_ID[c.classId];
-      const cv = h('canvas', { width: 12, height: 12, 'aria-hidden': 'true' });
+      const cv = h('canvas', { width: 24, height: 24, 'aria-hidden': 'true' });
       cv.getContext('2d')!.drawImage(sprite('hero', cls.palette), 0, 0);
       list.append(h('li', { class: 'char-card' }, cv,
         h('div', { class: 'info' },
