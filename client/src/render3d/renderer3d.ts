@@ -29,10 +29,13 @@ function skeletonModel(defId: string, shape: string): { model: string; weapon?: 
     if (defId === 'skel_archer') return { model: 'Skeleton_Rogue', weapon: 'crossbow_1handed', scale: 1 };
     if (defId === 'obsidian_knight') return { model: 'Skeleton_Warrior', weapon: 'sword_1handed', offhand: 'shield_spikes', scale: 1.15, tint: true };
     if (defId === 'kragg') return { model: 'Skeleton_Warrior', weapon: 'sword_2handed', scale: 1, tint: true };
+    if (defId === 'forgotten_knight') return { model: 'Skeleton_Warrior', weapon: 'sword_1handed', offhand: 'shield_badge', scale: 1.05 };
+    if (defId === 'ice_archer') return { model: 'Skeleton_Rogue', weapon: 'crossbow_2handed', scale: 1, tint: true };
+    if (defId === 'abyss_knight') return { model: 'Skeleton_Warrior', weapon: 'axe_2handed', scale: 1.2, tint: true };
     return { model: 'Skeleton_Minion', weapon: 'axe_1handed', scale: 1 };
   }
-  if (shape === 'imp') return { model: 'Skeleton_Rogue', weapon: 'dagger', scale: 0.9, tint: true };
-  if (shape === 'wraith') return { model: 'Skeleton_Mage', weapon: 'staff', scale: 1, tint: true, ghost: true };
+  if (shape === 'imp') return { model: 'Skeleton_Rogue', weapon: defId === 'demon_archer' ? 'crossbow_1handed' : 'dagger', scale: 0.9, tint: true };
+  if (shape === 'wraith') return { model: 'Skeleton_Mage', weapon: defId === 'grave_mage' ? 'spellbook_open' : 'staff', scale: 1, tint: true, ghost: defId !== 'grave_mage' };
   return null;
 }
 
@@ -63,6 +66,7 @@ export class Renderer3D {
   private rubble: any = null;
   private portal: any = null;
   private npcViews: { name: string; root: any; char?: CharView; x: number; z: number }[] = [];
+  private roofs: { obj: any; x0: number; x1: number; z0: number; z1: number; mats: any[] }[] = [];
   private mapVersion = 0;
   private parts!: { geo: any; pos: Float32Array; col: Float32Array; vel: Float32Array; life: Float32Array; max: Float32Array; base: Float32Array; n: number; points: any };
   private quality = { low: false, frames: 0, t: 0 };
@@ -142,7 +146,7 @@ export class Renderer3D {
     this.scene.remove(this.staticGroup);
     this.staticGroup = new THREE.Group();
     this.scene.add(this.staticGroup);
-    this.chests = []; this.stairsObj = null; this.rubble = null; this.portal = null;
+    this.chests = []; this.stairsObj = null; this.rubble = null; this.portal = null; this.roofs = [];
     for (const n of this.npcViews) n.char?.mixer.stopAllAction();
     this.npcViews = [];
     this.torches = [];
@@ -153,7 +157,7 @@ export class Renderer3D {
     const names = ['floor_tile_large', 'floor_tile_large_rocks', 'wall', 'wall_cracked', 'torch_mounted', 'barrel_small', 'barrel_large', 'crates_stacked', 'box_stacked',
       'banner_patternA_red', 'banner_thin_blue', 'candle_triple', 'rubble_half', ...(town
         ? ['floor_dirt_large', 'table_medium_decorated_A', 'keg_decorated', 'banner_shield_yellow', 'sword_shield', 'shelf_small_candles', 'trunk_large_A', 'bottle_A_green']
-        : ['chest', 'chest_gold', 'stairs', 'floor_tile_big_spikes', 'rubble_large', 'pillar', 'column'])];
+        : ['chest', 'chest_gold', 'stairs', 'floor_tile_big_spikes', 'rubble_large', 'pillar', 'pillar_decorated', 'column', 'floor_dirt_large'])];
     const g: Record<string, any> = {};
     await Promise.all(names.map((n) => load(n).then((x) => (g[n] = x)).catch(() => null)));
     if (version !== this.mapVersion) return;
@@ -175,12 +179,21 @@ export class Renderer3D {
     const M = (x: number, y: number, z: number, rot: number, sx = KAY, sy = KAY, sz = KAY) =>
       new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rot), new THREE.Vector3(sx, sy, sz));
     const stairs = m.stairs;
+    // tile sólido isolado (cercado de chão) vira pilar em vez de quatro paredes
+    const isPillar = (x: number, y: number) => at(x, y) !== T_FLOOR && at(x + 1, y) === T_FLOOR && at(x - 1, y) === T_FLOOR && at(x, y + 1) === T_FLOOR && at(x, y - 1) === T_FLOOR;
+    const caves = m.layout === 'caves';
+    const decor: { kind: string; x: number; z: number; r: number; s: number }[] = [];
 
     for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) {
+      if (isPillar(x, y)) {
+        put(town ? 'column' : 'pillar', M(x + 0.5, 0, y + 0.5, 0, KAY * 0.75, KAY, KAY * 0.75));
+        put(caves ? 'floor_dirt_large' : 'floor_tile_large', M(x + 0.5, 0, y + 0.5, 0));
+        continue;
+      }
       if (at(x, y) !== T_FLOOR) continue;
       const hsh = hash(x, y);
       if (!(stairs && stairs.x === x && stairs.y === y && !town)) {
-        const floorName = town ? (hsh % 5 === 0 ? 'floor_dirt_large' : 'floor_tile_large') : hsh % 23 === 0 && !m.stairs?.open === !!m.stairs ? 'floor_tile_large_rocks' : 'floor_tile_large';
+        const floorName = town ? (hsh % 5 === 0 ? 'floor_dirt_large' : 'floor_tile_large') : caves ? (hsh % 4 === 0 ? 'floor_tile_large_rocks' : 'floor_dirt_large') : hsh % 23 === 0 ? 'floor_tile_large_rocks' : 'floor_tile_large';
         put(floorName, M(x + 0.5, 0, y + 0.5, ((hsh >> 3) % 4) * (Math.PI / 2)));
       }
       // paredes nas bordas com tiles sólidos (a parede fica dentro do tile sólido)
@@ -190,7 +203,7 @@ export class Renderer3D {
       ];
       for (const [nx, ny, wx, wz, rot, south] of edges) {
         const t = at(nx, ny);
-        if (t === T_FLOOR) continue;
+        if (t === T_FLOOR || isPillar(nx, ny)) continue;
         // paredes viradas para a câmera ficam baixas para não esconder o jogador
         put(t === 3 ? 'wall_cracked' : 'wall', M(wx, 0, wz, rot, KAY, south ? KAY * 0.28 : KAY, KAY));
         if (!south && rot === 0) {
@@ -201,6 +214,10 @@ export class Renderer3D {
           } else if (h2 % 13 === 1) put(town ? 'banner_shield_yellow' : h2 % 2 ? 'banner_patternA_red' : 'banner_thin_blue', M(x + 0.5, 0, y - 0.25, 0));
         }
       }
+      // decoração do bioma no chão (cristais, cogumelos, lava, ossos, fragmentos do vazio)
+      const h4 = hash(x, y, 11) % 100;
+      if (!town && h4 < (caves ? 6 : 3) && !m.objects.some((o) => o.x === x && o.y === y) && !(stairs && stairs.x === x && stairs.y === y))
+        decor.push({ kind: ['bones', 'crystal', 'shroom', 'lava', 'shard'][m.biome] ?? 'bones', x: x + 0.2 + (hash(x, y, 12) % 60) / 100, z: y + 0.2 + (hash(x, y, 13) % 60) / 100, r: (hash(x, y, 14) % 628) / 100, s: 0.7 + (hash(x, y, 15) % 60) / 100 });
       // decoração junto às paredes (sem colisão, só visual)
       const nearWall = edges.some(([nx, ny]) => at(nx, ny) !== T_FLOOR);
       const h3 = hash(x, y, 3) % 100;
@@ -210,6 +227,8 @@ export class Renderer3D {
         put(name, M(x + 0.5 + ((hash(x, y, 4) % 5) - 2) * 0.06, 0, y + 0.5 + ((hash(x, y, 5) % 5) - 2) * 0.06, (hash(x, y, 6) % 8) * 0.785));
       }
     }
+
+    this.buildDecor(decor, m.biome);
 
     // objetos do andar (armadilhas fixas; baús animados à parte)
     if (!town) {
@@ -244,6 +263,21 @@ export class Renderer3D {
     if (!town) {
       // baús (cada um com tampa animável)
       for (const o of m.objects) {
+        if (o.k === 'shrine') {
+          // santuário: pilar com cristal flutuante e luz (apaga depois de usado)
+          const grp = new THREE.Group();
+          if (g.pillar_decorated) { const p = g.pillar_decorated.scene.clone(); p.scale.set(KAY * 0.6, KAY * 0.32, KAY * 0.6); grp.add(p); }
+          const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 0), mat('#ffe9a8', { emissive: '#ffd23f', ei: o.open ? 0.1 : 2 }));
+          orb.position.y = 1.65;
+          const light = new THREE.PointLight('#ffd890', o.open ? 0 : 8, 5, 1.6);
+          light.position.y = 1.6;
+          grp.add(orb, light);
+          grp.position.set(o.x + 0.5, 0, o.y + 0.5);
+          grp.userData.shrine = { orb, light };
+          this.staticGroup.add(grp);
+          this.chests.push(grp);
+          continue;
+        }
         if (o.k !== 'chest' && o.k !== 'secretChest') { this.chests.push(null); continue; }
         const src = g[o.k === 'chest' ? 'chest' : 'chest_gold'];
         if (!src) { this.chests.push(null); continue; }
@@ -296,6 +330,37 @@ export class Renderer3D {
     for (const l of this.torchLights) l.color.set(town ? '#ffb060' : BIOME_LIGHT[m.biome] === '#8fd8ff' ? '#8fd8ff' : '#ff9a4a');
   }
 
+  /** Decoração procedural por bioma, instanciada (1 draw call por tipo). */
+  private buildDecor(list: { kind: string; x: number; z: number; r: number; s: number }[], biome: number) {
+    if (!list.length) return;
+    const groups = new Map<string, typeof list>();
+    for (const d of list) { let gr = groups.get(d.kind); if (!gr) groups.set(d.kind, (gr = [])); gr.push(d); }
+    const accent = BIOMES[biome]?.accent ?? '#ffffff';
+    const kinds: Record<string, { geo: any; mat: any; y: number; scale: [number, number, number] }[]> = {
+      crystal: [{ geo: new THREE.OctahedronGeometry(1, 0), mat: mat(accent, { emissive: accent, ei: 1.2, rough: 0.2 }), y: 0.18, scale: [0.07, 0.22, 0.07] }],
+      shroom: [
+        { geo: new THREE.CylinderGeometry(1, 1, 1, 6), mat: mat('#e8dcc0'), y: 0.1, scale: [0.03, 0.2, 0.03] },
+        { geo: new THREE.SphereGeometry(1, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), mat: mat(accent, { emissive: accent, ei: 0.9 }), y: 0.2, scale: [0.11, 0.08, 0.11] },
+      ],
+      lava: [{ geo: new THREE.CircleGeometry(1, 10), mat: new THREE.MeshBasicMaterial({ color: '#ff6a1e' }), y: 0.012, scale: [0.22, 0.22, 0.22] }],
+      shard: [{ geo: new THREE.TetrahedronGeometry(1, 0), mat: mat('#3d2a6e', { emissive: accent, ei: 0.8 }), y: 0.35, scale: [0.08, 0.14, 0.08] }],
+      bones: [{ geo: new THREE.CylinderGeometry(1, 1, 1, 5), mat: mat('#d8d0bc'), y: 0.02, scale: [0.015, 0.22, 0.015] }],
+    };
+    for (const [kind, items] of groups) {
+      for (const k of kinds[kind] ?? []) {
+        const im = new THREE.InstancedMesh(k.geo, k.mat, items.length);
+        items.forEach((d, i) => {
+          const rot = kind === 'lava' ? new THREE.Euler(-Math.PI / 2, 0, d.r) : kind === 'bones' ? new THREE.Euler(Math.PI / 2, d.r, 0) : new THREE.Euler(0.15, d.r, 0.1);
+          im.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(d.x, k.y * d.s, d.z), new THREE.Quaternion().setFromEuler(rot), new THREE.Vector3(k.scale[0] * d.s, k.scale[1] * d.s, k.scale[2] * d.s)));
+        });
+        im.instanceMatrix.needsUpdate = true;
+        im.computeBoundingSphere();
+        im.castShadow = kind !== 'lava';
+        this.staticGroup.add(im);
+      }
+    }
+  }
+
   private buildTownExtras(g: Record<string, any>, tint: string) {
     const m = this.map!;
     // telhados: um por construção (componentes de tiles sólidos que não são a borda)
@@ -328,8 +393,10 @@ export class Renderer3D {
       prism.position.set(0, wallH + Math.min(W, D) * 0.275 + 0.04, 0);
       roof.add(base, prism);
       roof.position.set(x0 + W / 2, 0, y0 + D / 2);
-      roof.traverse((o: any) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      const mats: any[] = [];
+      roof.traverse((o: any) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.material = o.material.clone(); o.material.transparent = true; mats.push(o.material); } });
       this.staticGroup.add(roof);
+      this.roofs.push({ obj: roof, x0: x0 - 0.5, x1: x1 + 1.5, z0: y0 - 2.5, z1: y1 + 1, mats });
     }
     // NPCs animados e portal
     const NPC_MODEL: Record<string, string> = { smith: 'Barbarian', alchemist: 'Mage', jeweler: 'Rogue', market: 'Knight' };
@@ -380,6 +447,7 @@ export class Renderer3D {
 
   openChest(i: number) {
     const c = this.chests[i];
+    if (c?.userData.shrine) { c.userData.shrine.light.intensity = 0; c.userData.shrine.orb.material = mat('#5a5040'); this.burst((c.position.x) * TILE, c.position.z * TILE, '#ffd23f', 50, 2, 1.2, 1.2); return; }
     if (c?.userData.lid) c.userData.opening = true;
   }
   openStairs() {
@@ -736,6 +804,11 @@ export class Renderer3D {
     for (const c of this.chests) if (c?.userData.opening && c.userData.lid) { c.userData.lid.rotation.x = Math.max(-1.6, c.userData.lid.rotation.x - dt * 5); }
     if (this.portal) { this.portal.rotation.y = Math.sin(t * 0.8) * 0.3; this.portal.children[1].material.opacity = 0.45 + Math.sin(t * 3) * 0.12; if (Math.random() < 0.3) this.burst(this.portal.position.x * TILE + (Math.random() - 0.5) * 16, this.portal.position.z * TILE, '#b07cff', 1, 0.3, 1.2, 0.3); }
     for (const n of this.npcViews) n.char?.mixer.update(dt);
+    // telhados ficam translúcidos quando o jogador está atrás da casa
+    for (const rf of this.roofs) {
+      const behind = tx > rf.x0 && tx < rf.x1 && tz > rf.z0 && tz < rf.z1;
+      for (const mm of rf.mats) mm.opacity += ((behind ? 0.25 : 1) - mm.opacity) * Math.min(1, dt * 8);
+    }
 
     // sincroniza entidades com objetos 3D
     const alive = new Set<number>();

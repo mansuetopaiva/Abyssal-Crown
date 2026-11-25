@@ -8,13 +8,13 @@ gerados proceduralmente, com chefes a cada 10 andares.
 
 | Sistema | Conteúdo |
 |---|---|
-| Contas | Cadastro/login com validação, senha com hash `scrypt`, sessão JWT em cookie `httpOnly`, rate limit, até 3 personagens |
+| Contas | Cadastro/login com validação, senha com hash `scrypt`, sessão JWT em cookie `httpOnly`, opção "Manter conectado" (30 dias renováveis), rate limit, até 3 personagens |
 | Multiplayer | Servidor autoritativo a 20 ticks/s, predição + reconciliação do próprio movimento, interpolação dos outros, cidade compartilhada, chat global, grupos (até 4), instância própria por grupo |
-| Dungeon | Andares infinitos com seed, salas + corredores, escada, baús, armadilhas, sala secreta (parede rachada), checkpoints a cada 10 andares, 5 biomas a cada 25 andares |
-| Monstros | 30 tipos, 5 comportamentos (corpo a corpo, à distância, conjurador, investida, explosivo), modificadores Elite / Veloz / Venenoso / Blindado / Vampírico / Explosivo |
-| Chefes | 10 chefes únicos com título, barra de vida, fases a 50% e 20%, ataques telegrafados, HP escala com o tamanho do grupo |
-| Itens | Ranks F→SSS com as chances pedidas, 0 a 6 atributos aleatórios, 10 itens SSS lendários com efeito único e anúncio no chat, 11 tipos de arma, 9 slots |
-| Classes | Guerreiro, Mago, Arqueiro, Ladino, Clérigo e Necromante — 4 habilidades + ultimate liberadas por nível (1, 3, 6, 10 e 15), 9 talentos cada, 5 atributos base |
+| Dungeon | Andares infinitos com seed em 5 tipos de mapa (salas e corredores, cavernas, salões de pilares, labirinto, arena), salas especiais (cofre com baús, covil de elites, santuário com bênção), escada, baús, armadilhas, sala secreta (parede rachada), checkpoints a cada 10 andares, 5 biomas a cada 25 andares com decoração própria |
+| Monstros | 50 tipos (10 por bioma), 5 comportamentos (corpo a corpo, à distância, conjurador, investida, explosivo), 10 modificadores: Elite, Veloz, Venenoso, Blindado, Vampírico, Explosivo, Gélido, Regenerador, Furioso, Etéreo |
+| Chefes | 15 chefes únicos com título, barra de vida, fases a 50% e 20%, ataques telegrafados, HP escala com o tamanho do grupo |
+| Itens | Ranks F→SSS com as chances pedidas, 0 a 6 atributos aleatórios (33 tipos), 20 itens SSS lendários com efeito único e anúncio no chat, 18 tipos de arma e 14 tipos de armadura, nomes que evoluem em 5 faixas de nível, 9 slots; arma equipada aparece na mão do herói (brilha a partir do rank A) |
+| Classes | Guerreiro, Mago, Arqueiro, Ladino, Clérigo e Necromante: 8 habilidades + ultimate cada, liberadas por nível (1, 3, 6, 10, 15, 20, 25, 30, 35), barra configurável com 4 habilidades à escolha, 9 talentos, 5 atributos base |
 | Economia | Gold e Gemas; venda ao mercador (item a item ou em lote por rank), Ferreiro (comprar, refinar +1..+15, reparar), Alquimista, Joalheira (gemas de engaste, combinar), Mercado entre jogadores com taxa de 5%, loja de gemas, missões diárias, conquistas, log de todas as transações |
 | Gráficos | 3D com Three.js: heróis e esqueletos animados (KayKit, CC0), masmorras montadas com peças 3D, tochas com luz real, sombras, névoa, partículas, telhados e NPCs na cidade |
 | Interface | inventário sempre ordenado por rank, HUD (vida, mana, XP, habilidades com recarga, minimapa, andar), textos de dano coloridos (crítico maior e amarelo), partículas em drops raros, ranking global, controles de teclado/mouse e toque |

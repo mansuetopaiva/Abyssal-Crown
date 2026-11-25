@@ -4,7 +4,7 @@ export type StatKey =
   | 'dmgPct' | 'flatDmg' | 'crit' | 'critDmg' | 'atkSpd' | 'lifesteal' | 'hp' | 'mana' | 'armor' | 'moveSpd'
   | 'resFire' | 'resIce' | 'resLightning' | 'resShadow' | 'resHoly'
   | 'fireDmg' | 'iceDmg' | 'lightningDmg' | 'shadowDmg' | 'holyDmg'
-  | Attr | 'goldFind' | 'magicFind' | 'cdr' | 'hpRegen' | 'manaRegen';
+  | Attr | 'goldFind' | 'magicFind' | 'cdr' | 'hpRegen' | 'manaRegen' | 'dodge' | 'thorns' | 'xpBonus';
 
 export interface Affix { stat: StatKey; value: number }
 export interface SocketGem { id: string; tier: number }
@@ -27,6 +27,7 @@ export interface Item {
   hp?: number;
   mana?: number;
   moveSpd?: number;
+  thorns?: number; // espinhos base (escudo cravado), em %
   value: number; // preço de venda em gold
 }
 
@@ -46,6 +47,7 @@ export interface CharacterData {
   invSlots: number;
   phoenixUsed?: boolean;
   shop?: { date: string; bought: number[] };
+  loadout?: number[]; // índices das 4 habilidades na barra
 }
 
 export interface Character {
@@ -81,6 +83,11 @@ export interface Stats {
   cdr: number;
   hpRegen: number;
   manaRegen: number;
+  dodge: number;
+  thorns: number;
+  xpBonus: number;
+  dr: number;
+  bossDmg: number;
   attrs: Record<Attr, number>;
   uniques: string[];
   weapon: { type: string; attack: 'melee' | 'ranged' | 'magic'; range: number; arc: number; projSpeed: number; element: Element };

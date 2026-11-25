@@ -80,6 +80,3 @@ export function xpForLevel(level: number): number {
 }
 export const MAX_LEVEL = 100;
 
-/** Nível em que cada habilidade é liberada: [1, 2, 3, 4, ultimate]. */
-export const SKILL_UNLOCK_LEVELS = [1, 3, 6, 10, 15] as const;
-export const skillUnlocked = (level: number, idx: number) => level >= (SKILL_UNLOCK_LEVELS[idx] ?? Infinity);

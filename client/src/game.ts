@@ -1,7 +1,8 @@
-import { BIOMES, SKILL_UNLOCK_LEVELS, TICK_MS, TICK_RATE, TILE, skillUnlocked, xpForLevel } from '../../shared/constants';
+import { BIOMES, TICK_MS, TICK_RATE, TILE, xpForLevel } from '../../shared/constants';
+import { LAYOUT_LABEL } from '../../shared/dungeon';
 import { decodeTiles, T_FLOOR } from '../../shared/dungeon';
 import { moveWithCollision } from '../../shared/movement';
-import { allSkills, CLASS_BY_ID } from '../../shared/stats';
+import { barSkills, CLASS_BY_ID, skillUnlockLevel } from '../../shared/stats';
 import type { Stats } from '../../shared/types';
 import { wsUrl } from './api';
 import { $, h, fmt } from './dom';
@@ -118,7 +119,7 @@ export class Game {
 
   private loadMap(m: any) {
     const tiles = decodeTiles(m.tiles, m.w * m.h);
-    this.map = { w: m.w, h: m.h, tiles, biome: m.biome, world: m.world, objects: m.objects ?? [], stairs: m.stairs, explored: new Uint8Array(m.w * m.h) };
+    this.map = { w: m.w, h: m.h, tiles, biome: m.biome, world: m.world, layout: m.layout, objects: m.objects ?? [], stairs: m.stairs, explored: new Uint8Array(m.w * m.h) };
     this.r.setMap(this.map);
     for (const e of this.ents.values()) e.active = false;
     this.ents.clear();
@@ -132,7 +133,7 @@ export class Game {
     $('#btn-town').hidden = m.world === 'town';
     $('#loading').hidden = true;
     this.panels.close();
-    if (m.world === 'dungeon') this.centerMsg(m.boss ? `Andar ${m.floor} — ${m.boss}` : `Andar ${m.floor} · ${BIOMES[m.biome].name}`);
+    if (m.world === 'dungeon') this.centerMsg(m.boss ? `Andar ${m.floor} — ${m.boss}` : `Andar ${m.floor} · ${BIOMES[m.biome].name} · ${LAYOUT_LABEL[m.layout as keyof typeof LAYOUT_LABEL] ?? ''}`);
     if (!this.running) this.start();
   }
 
@@ -326,8 +327,8 @@ export class Game {
 
   skill(i: number) {
     if (this.map?.world !== 'dungeon' || !this.char) return;
-    const sk = allSkills(CLASS_BY_ID[this.char.classId])[i];
-    if (!skillUnlocked(this.char.level, i)) { this.toast(`${sk.name} é liberada no nível ${SKILL_UNLOCK_LEVELS[i]}.`, 'error'); return; }
+    const sk = barSkills(CLASS_BY_ID[this.char.classId], this.char.data.loadout)[i];
+    if (this.char.level < skillUnlockLevel(sk)) { this.toast(`${sk.name} é liberada no nível ${skillUnlockLevel(sk)}.`, 'error'); return; }
     const cd = this.cds.get(sk.id);
     if (cd && cd.until > performance.now()) return;
     const [x, y] = this.aimPoint();
@@ -502,18 +503,19 @@ export class Game {
     $('#pot-mp').textContent = String(c.data.consumables.manaPotion);
     this.bar('.bar.xp', c.xp, xpForLevel(c.level), false);
     const bar = $('#skillbar');
-    const unlocked = SKILL_UNLOCK_LEVELS.filter((lv) => c.level >= lv).length;
-    const barKey = `${c.classId}:${unlocked}`;
+    const skills = barSkills(cls, c.data.loadout);
+    const barKey = `${c.classId}:${skills.map((s) => `${s.id}${c.level >= skillUnlockLevel(s) ? '' : '!'}`).join(',')}`;
     if (bar.dataset.key !== barKey) {
       bar.dataset.key = barKey;
-      bar.replaceChildren(...allSkills(cls).map((s, i) => {
-        const locked = !skillUnlocked(c.level, i);
+      bar.replaceChildren(...skills.map((s, i) => {
+        const lv = skillUnlockLevel(s);
+        const locked = c.level < lv;
         return h('button', {
           class: `skill${i === 4 ? ' ult' : ''}${locked ? ' locked' : ''}`, 'data-id': s.id, 'data-mana': s.mana,
-          title: locked ? `${s.name} — liberada no nível ${SKILL_UNLOCK_LEVELS[i]}` : `${s.name} — ${s.desc} (${s.mana} mana, ${s.cd}s)`,
-          'aria-label': `${s.name}, tecla ${i === 4 ? 'R' : i + 1}${locked ? `, bloqueada até o nível ${SKILL_UNLOCK_LEVELS[i]}` : ''}`, onclick: () => this.skill(i),
+          title: locked ? `${s.name} — liberada no nível ${lv}` : `${s.name} — ${s.desc} (${s.mana} mana, ${s.cd}s)`,
+          'aria-label': `${s.name}, tecla ${i === 4 ? 'R' : i + 1}${locked ? `, bloqueada até o nível ${lv}` : ''}`, onclick: () => this.skill(i),
         }, h('span', { class: 'key', text: i === 4 ? 'R' : String(i + 1) }), locked ? '🔒' : s.name,
-          locked ? h('span', { class: 'lock', text: `Nv ${SKILL_UNLOCK_LEVELS[i]}` }) : null, h('span', { class: 'cd' }), h('span', { class: 'cdt' }));
+          locked ? h('span', { class: 'lock', text: `Nv ${lv}` }) : null, h('span', { class: 'cd' }), h('span', { class: 'cdt' }));
       }));
     }
   }

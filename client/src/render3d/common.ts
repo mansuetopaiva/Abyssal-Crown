@@ -10,7 +10,7 @@ export const F_DEAD = 1, F_STEALTH = 2, F_STUN = 4, F_SLOW = 8, F_POISON = 16, F
 export const aimFromFlags = (f: number) => (((f >> 8) & 63) / 64) * Math.PI * 2;
 
 export interface MapState {
-  w: number; h: number; tiles: Uint8Array; biome: number; world: 'town' | 'dungeon';
+  w: number; h: number; tiles: Uint8Array; biome: number; world: 'town' | 'dungeon'; layout?: string;
   objects: { k: string; x: number; y: number; open: boolean }[]; stairs?: { x: number; y: number; open: boolean };
   explored: Uint8Array;
 }

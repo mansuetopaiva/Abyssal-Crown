@@ -1,5 +1,5 @@
 import type { WebSocket } from 'ws';
-import { computeStats, CLASS_BY_ID, allSkills } from '../../shared/stats';
+import { barSkills, computeStats, CLASS_BY_ID } from '../../shared/stats';
 import type { Character, Stats } from '../../shared/types';
 import type { World } from './world';
 import type { Party } from './party';
@@ -50,7 +50,8 @@ export class Player {
 
   get name() { return this.char.name; }
   get cls() { return CLASS_BY_ID[this.char.classId]; }
-  get skills() { return allSkills(this.cls); }
+  /** As 5 habilidades da barra (4 escolhidas + ultimate). */
+  get skills() { return barSkills(this.cls, this.char.data.loadout); }
 
   recompute() {
     const prevMax = this.stats?.maxHp;

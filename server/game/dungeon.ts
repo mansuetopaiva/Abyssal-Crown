@@ -1,14 +1,14 @@
 import monstersData from '../../shared/data/monsters.json';
 import bossesData from '../../shared/data/bosses.json';
 import {
-  BIOMES, CHECKPOINT_EVERY, ELEMENTS, RANKS, SKILL_UNLOCK_LEVELS, TICK_RATE, TILE, floorScaling, isBossFloor, skillUnlocked, type Element,
+  BIOMES, CHECKPOINT_EVERY, ELEMENTS, RANKS, TICK_RATE, TILE, floorScaling, isBossFloor, type Element,
 } from '../../shared/constants';
 import { computeDamage } from '../../shared/combat';
 import { encodeTiles, generateFloor, T_FLOOR, T_SECRET, type FloorMap } from '../../shared/dungeon';
 import { rollChestLoot, rollMonsterLoot } from '../../shared/loot';
 import { lineOfSight, moveWithCollision, type Grid } from '../../shared/movement';
 import { hashSeed } from '../../shared/rng';
-import type { SkillDef } from '../../shared/stats';
+import { allSkills, skillUnlockLevel, type SkillDef } from '../../shared/stats';
 import type { Item } from '../../shared/types';
 import { checkAchievements, ensureDaily, grantXp } from './character';
 import { addToInventory } from './inventory';
@@ -20,8 +20,8 @@ type MonsterDef = (typeof monstersData)[number];
 type BossDef = (typeof bossesData)[number];
 const MONSTER_BY_ID: Record<string, MonsterDef> = Object.fromEntries(monstersData.map((m) => [m.id, m]));
 const ELEM_IDX = (e: string) => Math.max(0, ELEMENTS.indexOf(e as Element));
-const MODS = ['elite', 'fast', 'poison', 'armored', 'vampiric', 'explosive'] as const;
-export const MOD_LABEL: Record<string, string> = { elite: 'Elite', fast: 'Veloz', poison: 'Venenoso', armored: 'Blindado', vampiric: 'Vampírico', explosive: 'Explosivo' };
+const MODS = ['elite', 'fast', 'poison', 'armored', 'vampiric', 'explosive', 'frost', 'regen', 'berserk', 'blink'] as const;
+export const MOD_LABEL: Record<string, string> = { elite: 'Elite', fast: 'Veloz', poison: 'Venenoso', armored: 'Blindado', vampiric: 'Vampírico', explosive: 'Explosivo', frost: 'Gélido', regen: 'Regenerador', berserk: 'Furioso', blink: 'Etéreo' };
 
 interface Monster {
   id: number; def: MonsterDef | BossDef; name: string; x: number; y: number; r: number;
@@ -30,7 +30,7 @@ interface Monster {
   poison: { dps: number; until: number; owner: Player | null } | null; tauntBy: Player | null; tauntUntil: number;
   state: 'idle' | 'chase' | 'windup' | 'dash' | 'fuse'; stateUntil: number; dirX: number; dirY: number;
   armor: number; projSpeed: number; boss?: { phase: number; nextAbility: number; active: boolean; adds: number };
-  isAdd?: boolean; dashHit?: Set<number>; wanderAt: number; lastHitBy: Player | null; dead?: boolean;
+  isAdd?: boolean; dashHit?: Set<number>; wanderAt: number; lastHitBy: Player | null; dead?: boolean; enraged?: boolean; blinkAt?: number;
 }
 interface Proj {
   id: number; owner: Player | null; src: Monster | null; x: number; y: number; vx: number; vy: number; left: number; r: number;
@@ -88,7 +88,12 @@ export class Dungeon extends World {
     const biome = BIOMES[this.map.biome];
     const pool = monstersData.filter((m) => m.biome === biome.id);
     const fs = floorScaling(floor);
-    for (const sp of this.map.spawns) this.spawnMonster(pool[(rnd() * pool.length) | 0], (sp.x + 0.5) * TILE, (sp.y + 0.5) * TILE, fs, true);
+    for (const sp of this.map.spawns) {
+      const m = this.spawnMonster(pool[(rnd() * pool.length) | 0], (sp.x + 0.5) * TILE, (sp.y + 0.5) * TILE, fs, true);
+      if (sp.elite && !m.mods.includes('elite')) {
+        m.mods.unshift('elite'); m.maxHp = m.hp = Math.round(m.hp * 2.6); m.dmg *= 1.4; m.r += 2; m.xp *= 3;
+      }
+    }
     if (this.map.boss) this.spawnBoss();
     if (movePlayers) {
       for (const p of [...this.players]) {
@@ -117,7 +122,7 @@ export class Dungeon extends World {
   mapMessage() {
     const pub = this.map.tiles.map((v) => (v === T_SECRET ? 3 : v));
     return {
-      world: 'dungeon', w: this.map.w, h: this.map.h, tiles: encodeTiles(pub), biome: this.map.biome, floor: this.floor,
+      world: 'dungeon', w: this.map.w, h: this.map.h, tiles: encodeTiles(pub), biome: this.map.biome, floor: this.floor, layout: this.map.layout,
       objects: this.map.objects.map((o, i) => ({ k: o.kind, x: o.x, y: o.y, open: this.chestsOpen[i] })),
       stairs: { x: this.map.stairs.x, y: this.map.stairs.y, open: this.stairsOpen }, boss: this.bossName,
     };
@@ -189,6 +194,8 @@ export class Dungeon extends World {
       return;
     }
     if (p.poison && p.poison.until > t) this.hurtPlayer(p, p.poison.dps * dt, 'shadow', null, false, true);
+    const regen = p.buffSum('regenPct', t);
+    if (regen > 0) p.hp = Math.min(p.stats.maxHp, p.hp + p.stats.maxHp * regen * dt);
     // armadilhas do andar
     const tx = Math.floor(p.x / TILE), ty = Math.floor(p.y / TILE);
     this.map.objects.forEach((o, i) => {
@@ -253,6 +260,18 @@ export class Dungeon extends World {
       if (m.dead) return;
     }
     if (m.stunUntil > t) return;
+    if (m.mods.includes('regen') && m.hp < m.maxHp) m.hp = Math.min(m.maxHp, m.hp + m.maxHp * 0.025 * dt);
+    if (m.mods.includes('berserk') && m.hp < m.maxHp * 0.4 && !m.enraged) {
+      m.enraged = true; m.dmg *= 1.6; m.speed *= 1.3; m.atkCd *= 0.7;
+      this.emit(['tx', m.x, m.y - 14, 'FÚRIA!']);
+    }
+    if (m.mods.includes('blink') && m.target && t > (m.blinkAt ?? 0) && dist(m.x, m.y, m.target.x, m.target.y) > 50) {
+      m.blinkAt = t + 4;
+      const a = Math.random() * Math.PI * 2;
+      const r = moveWithCollision(this.grid, m.target.x, m.target.y, Math.cos(a) * 30, Math.sin(a) * 30, 5);
+      this.emit(['da', m.x, m.y, r.x, r.y, 4]);
+      m.x = r.x; m.y = r.y;
+    }
     if (m.boss) return this.updateBoss(m, dt);
     const tgt = (m.target = this.pickTarget(m));
     if (m.state === 'windup') {
@@ -441,16 +460,17 @@ export class Dungeon extends World {
     const dealt = this.hurtPlayer(p, r.amount, r.element, m, r.crit, false);
     if (dealt <= 0) return;
     if (m.mods.includes('poison')) p.poison = { dps: m.dmg * 0.3, until: this.time + 3 };
+    if (m.mods.includes('frost')) p.slowUntil = this.time + 1.5;
     if (m.mods.includes('vampiric')) m.hp = Math.min(m.maxHp, m.hp + dealt * 0.5);
-    if (melee && p.stats.uniques.includes('thorns')) this.applyDamageToMonster(m, dealt * 0.6, 'physical', false, p);
+    if (melee && p.stats.thorns > 0) this.applyDamageToMonster(m, dealt * p.stats.thorns, 'physical', false, p);
   }
 
   /** Aplica dano final a um jogador. Retorna o dano efetivo. */
   hurtPlayer(p: Player, amount: number, element: Element, src: Monster | null, crit: boolean, silent: boolean): number {
     if (p.dead) return 0;
     const t = this.time;
-    if (!silent && p.stats.uniques.includes('windwalk') && rnd() < 0.15) { this.emit(['tx', p.x, p.y - 10, 'Esquiva']); return 0; }
-    const dr = Math.min(0.8, p.buffSum('dr', t));
+    if (!silent && p.stats.dodge > 0 && rnd() < p.stats.dodge) { this.emit(['tx', p.x, p.y - 10, 'Esquiva']); return 0; }
+    const dr = Math.min(0.8, p.buffSum('dr', t) + p.stats.dr);
     const dmg = amount * (1 - dr);
     p.hp -= dmg;
     if (!silent || dmg >= 1) this.emit(['d', Math.round(p.x), Math.round(p.y - 8), Math.round(dmg), ELEM_IDX(element), crit ? 1 : 0, 1]);
@@ -491,8 +511,11 @@ export class Dungeon extends World {
     const forceCrit = o.crit || p.nextCrit;
     const r = computeDamage(
       {
-        min: s.minDmg, max: s.maxDmg, critChance: forceCrit ? 1 : s.crit, critMult: s.critMult, element, elementBonus: s.elemBonus[element],
-        multiplier: mult * (1 + skillBonus) * (1 + s.dmgPct + p.buffSum('dmgPct', t)), level: p.char.level,
+        min: s.minDmg, max: s.maxDmg, critChance: forceCrit ? 1 : Math.min(1, s.crit + p.buffSum('critBonus', t)), critMult: s.critMult, element, elementBonus: s.elemBonus[element],
+        multiplier: mult * (1 + skillBonus) * (1 + s.dmgPct + p.buffSum('dmgPct', t))
+          * (s.uniques.includes('berserker') ? 1 + 0.04 * Math.floor((1 - p.hp / s.maxHp) * 10) : 1)
+          * (m.boss || m.mods.includes('elite') ? 1 + s.bossDmg : 1),
+        level: p.char.level,
         executeBonus: s.uniques.includes('executioner') && m.hp < m.maxHp * 0.25 ? 1 : 0,
       },
       { armor: m.armor, level: p.char.level, res: { [m.element]: m.element === 'physical' ? 0 : 0.25 } },
@@ -558,11 +581,12 @@ export class Dungeon extends World {
       c.data.daily.kills++;
       if (m.boss) c.data.stats.bossKills++;
       const before = c.level;
-      const ups = grantXp(c, m.xp * (m.isAdd ? 0.3 : 1));
+      const ups = grantXp(c, m.xp * (m.isAdd ? 0.3 : 1) * (1 + p.stats.xpBonus));
       if (ups) {
-        p.skills.forEach((sk, i) => {
-          if (before < SKILL_UNLOCK_LEVELS[i] && c.level >= SKILL_UNLOCK_LEVELS[i]) p.toast(`Nova habilidade: ${sk.name}!`, 'good');
-        });
+        for (const sk of allSkills(p.cls)) {
+          const lv = skillUnlockLevel(sk);
+          if (before < lv && c.level >= lv) p.toast(`Nova habilidade: ${sk.name}! Configure a barra em Talentos (C).`, 'good');
+        }
         p.recompute();
         p.hp = p.stats.maxHp; p.mana = p.stats.maxMana;
         this.emit(['lv', p.x, p.y]);
@@ -757,7 +781,7 @@ export class Dungeon extends World {
     const t = this.time;
     const sk = p.skills[idx] as SkillDef | undefined;
     if (!sk || p.dead || p.stunUntil > t || !Number.isFinite(a)) return;
-    if (!skillUnlocked(p.char.level, idx)) { p.toast(`${sk.name} é liberada no nível ${SKILL_UNLOCK_LEVELS[idx]}.`, 'error'); return; }
+    if (p.char.level < skillUnlockLevel(sk)) { p.toast(`${sk.name} é liberada no nível ${skillUnlockLevel(sk)}.`, 'error'); return; }
     if ((p.cds[sk.id] ?? 0) > t) return;
     if (p.mana < sk.mana) { p.toast('Mana insuficiente.', 'error'); return; }
     p.mana -= sk.mana;
@@ -878,6 +902,26 @@ export class Dungeon extends World {
         this.descendAt = t + 3;
         this.emit(['ph', `${p.name} encontrou a escada. Descendo em 3 s...`]);
       }
+      return;
+    }
+    // santuários: bênção aleatória uma vez por andar
+    for (let i = 0; i < this.map.objects.length; i++) {
+      const o = this.map.objects[i];
+      if (o.kind !== 'shrine' || this.chestsOpen[i] || dist((o.x + 0.5) * TILE, (o.y + 0.5) * TILE, p.x, p.y) > 26) continue;
+      this.chestsOpen[i] = true;
+      const blessings: { name: string; stats: Record<string, number> }[] = [
+        { name: 'Fúria', stats: { dmgPct: 0.5 } }, { name: 'Pressa', stats: { atkSpd: 0.4, moveSpd: 0.25 } },
+        { name: 'Proteção', stats: { dr: 0.35 } }, { name: 'Precisão', stats: { critBonus: 0.3 } }, { name: 'Vida', stats: { regenPct: 0.03 } },
+      ];
+      const b = blessings[(rnd() * blessings.length) | 0];
+      for (const pl of this.players) {
+        if (pl.dead) continue;
+        pl.buffs.push({ stats: b.stats, until: t + 60, source: 'shrine' });
+        pl.hp = pl.stats.maxHp; pl.mana = pl.stats.maxMana;
+        pl.send({ t: 'obj', i, open: true });
+        pl.toast(`Santuário: Bênção de ${b.name} por 60 s!`, 'good');
+      }
+      this.emit(['ex', (o.x + 0.5) * TILE, (o.y + 0.5) * TILE, 40, 5]);
       return;
     }
     // baús

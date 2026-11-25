@@ -37,9 +37,11 @@ export const CLASS_MODEL: Record<string, { model: string; tint?: string }> = {
 export const WEAPON_MODEL: Record<string, string> = {
   sword: 'sword_1handed', axe: 'axe_1handed', spear: 'sword_2handed', bow: 'crossbow_1handed', crossbow: 'crossbow_2handed',
   staff: 'staff', wand: 'wand', dagger: 'dagger', hammer: 'axe_2handed', scythe: 'axe_2handed', grimoire: 'spellbook_open',
+  greatsword: 'sword_2handed', greataxe: 'axe_2handed', katana: 'sword_1handed', shortbow: 'crossbow_1handed', scepter: 'wand',
+  flamestaff: 'staff', froststaff: 'staff',
 };
-export const OFFHAND_MODEL: Record<string, string> = { shield: 'shield_round', orb: 'spellbook_closed' };
-export const TWO_HANDED = new Set(['spear', 'bow', 'crossbow', 'staff', 'hammer', 'scythe']);
+export const OFFHAND_MODEL: Record<string, string> = { shield: 'shield_round', spikeshield: 'shield_spikes', orb: 'spellbook_closed', tome: 'spellbook_closed' };
+export const TWO_HANDED = new Set(['spear', 'bow', 'crossbow', 'staff', 'hammer', 'scythe', 'greatsword', 'greataxe', 'shortbow', 'flamestaff', 'froststaff']);
 const ACCESSORY = /Sword|Shield|Spellbook|Wand|Staff|Knife|Crossbow|Throwable|Axe|Mug/i;
 
 const tintCache = new Map<string, any>();
@@ -229,6 +231,38 @@ export function makeProcedural(shape: string, pal: string[]): ProcView {
       for (const x of [-0.06, 0.06]) body.add(part(geo.sphere, eye, [0.03, 0.03, 0.03], [x, 0.22, 0.34]));
       break;
     }
+    case 'elemental': { // núcleo brilhante cercado de fragmentos flutuantes
+      body.position.y = 0.55;
+      body.add(part(geo.sphere, mat(c3, { emissive: c1, ei: 1.4 }), [0.14, 0.14, 0.14], [0, 0, 0]));
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        const shard = part(new THREE.OctahedronGeometry(1, 0), mat(i % 2 ? c1 : c2, { emissive: c1, ei: 0.35, rough: 0.3 }), [0.07, 0.17, 0.07], [Math.cos(a) * 0.26, Math.sin(i * 1.7) * 0.12, Math.sin(a) * 0.26]);
+        body.add(shard); parts.push(shard);
+      }
+      break;
+    }
+    case 'crab': {
+      body.add(part(geo.sphereHi, mat(c1, { flat: false, rough: 0.35 }), [0.3, 0.13, 0.24], [0, 0.18, 0]));
+      for (const x of [-0.07, 0.07]) { body.add(part(geo.cyl, mat(c2), [0.012, 0.08, 0.012], [x, 0.3, 0.15])); body.add(part(geo.sphere, eye, [0.03, 0.03, 0.03], [x, 0.35, 0.15])); }
+      for (const x of [-1, 1]) {
+        const claw = part(geo.sphere, mat(c2), [0.12, 0.07, 0.1], [x * 0.3, 0.2, 0.22]);
+        body.add(claw); parts.push(claw);
+      }
+      for (let i = 0; i < 6; i++) {
+        const side = i < 3 ? 1 : -1, k = i % 3;
+        const leg = part(geo.box, mat(c2), [0.22, 0.025, 0.025], [side * 0.3, 0.07, 0.06 - k * 0.1], [0, side * 0.2, side * -0.6]);
+        body.add(leg); parts.push(leg);
+      }
+      break;
+    }
+    case 'treant': {
+      body.add(part(geo.cyl, mat(c1), [0.16, 0.7, 0.16], [0, 0.35, 0]));
+      body.add(part(geo.sphere, mat(c2), [0.36, 0.3, 0.36], [0, 0.85, 0]));
+      body.add(part(geo.sphere, mat(c2), [0.22, 0.2, 0.22], [0.2, 0.7, 0.1]));
+      for (const x of [-0.05, 0.05]) body.add(part(geo.sphere, eye, [0.03, 0.035, 0.02], [x, 0.55, 0.15]));
+      for (const x of [-1, 1]) { const arm = part(geo.cyl, mat(c1), [0.05, 0.42, 0.05], [x * 0.22, 0.45, 0], [0, 0, x * 0.7]); body.add(arm); parts.push(arm); }
+      break;
+    }
     default: { // golem de pedra
       body.add(part(geo.box, mat(c1), [0.5, 0.45, 0.34], [0, 0.6, 0]));
       body.add(part(geo.box, mat(c1), [0.26, 0.22, 0.24], [0, 0.95, 0.03]));
@@ -253,6 +287,9 @@ export function animateProcedural(v: ProcView, dt: number, moving: boolean, atta
     case 'eye': b.position.y = 0.5 + Math.sin(t * 2) * 0.06; v.parts.forEach((l: any, i: number) => (l.rotation.z = Math.sin(t * 3 + i) * 0.25)); break;
     case 'worm': v.parts.forEach((s: any, i: number) => (s.position.x = Math.sin(t * 6 - i * 0.9) * 0.05 * i)); break;
     case 'mushroom': b.scale.y = 1 + Math.sin(t * 4) * 0.04; break;
+    case 'elemental': b.rotation.y = t * 1.2; b.position.y = 0.55 + Math.sin(t * 2.5) * 0.06; v.parts.forEach((s: any, i: number) => (s.position.y = Math.sin(t * 2 + i) * 0.14)); break;
+    case 'crab': v.parts.forEach((l: any, i: number) => (i < 2 ? (l.rotation.z = Math.sin(t * 8 + i * Math.PI) * 0.4 + attacking * 0.6) : (l.rotation.x = Math.sin(t * 16 + i) * (moving ? 0.4 : 0.05)))); break;
+    case 'treant': b.rotation.z = Math.sin(t * 1.5) * 0.04; v.parts.forEach((a: any, i: number) => (a.rotation.x = Math.sin(t * 3 + i * Math.PI) * (moving ? 0.4 : 0.1) - attacking * 1.2)); break;
     default: v.parts.forEach((a: any, i: number) => (a.rotation.x = Math.sin(t * 6 + i * Math.PI) * (moving ? 0.5 : 0.08) - attacking * 1.4)); break;
   }
 }

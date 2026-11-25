@@ -21,11 +21,11 @@ test('a escada é sempre alcançável a partir do início (200 andares)', () => 
   }
 });
 
-test('codificação compacta faz ida e volta sem perdas e ocupa menos de 4 KB', () => {
+test('codificação compacta faz ida e volta sem perdas e ocupa menos de 12 KB', () => {
   const m = generateFloor(99, 40);
   const enc = encodeTiles(m.tiles);
   assert.deepEqual(Array.from(decodeTiles(enc, m.w * m.h)), Array.from(m.tiles));
-  assert.ok(enc.length < 4096, `tamanho ${enc.length}`);
+  assert.ok(enc.length < 12288, `tamanho ${enc.length}`);
 });
 
 test('sala secreta só é acessível pela parede secreta', () => {

@@ -101,6 +101,7 @@ export function migrateData(c: Character) {
   d.cosmetics ??= [];
   d.cosmetic ??= '';
   d.achievements ??= [];
+  d.loadout ??= [0, 1, 2, 3];
   ensureDaily(c);
 }
 

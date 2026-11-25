@@ -1,36 +1,1009 @@
 [
-  { "id": "skeleton", "name": "Esqueleto Errante", "biome": "catacombs", "shape": "skeleton", "palette": ["#e8e2d0", "#9c9480", "#2a2418"], "hp": 34, "dmg": 6, "speed": 46, "ai": "melee", "range": 14, "atkCd": 1.1, "element": "physical", "xp": 10, "radius": 6 },
-  { "id": "skel_archer", "name": "Arqueiro Ossudo", "biome": "catacombs", "shape": "skeleton", "palette": ["#d8cfb8", "#7a6f5a", "#5a2a18"], "hp": 24, "dmg": 5, "speed": 40, "ai": "ranged", "range": 110, "atkCd": 1.8, "element": "physical", "xp": 12, "radius": 6, "projSpeed": 150 },
-  { "id": "ghoul", "name": "Carniçal", "biome": "catacombs", "shape": "imp", "palette": ["#7c8a6a", "#4a5440", "#c23b3b"], "hp": 46, "dmg": 8, "speed": 58, "ai": "melee", "range": 14, "atkCd": 1.0, "element": "physical", "xp": 14, "radius": 7 },
-  { "id": "crypt_bat", "name": "Morcego da Cripta", "biome": "catacombs", "shape": "bat", "palette": ["#4a3a5c", "#2a1f36", "#ff4f4f"], "hp": 16, "dmg": 4, "speed": 84, "ai": "melee", "range": 12, "atkCd": 0.8, "element": "physical", "xp": 7, "radius": 5 },
-  { "id": "wraith", "name": "Espectro Lamentoso", "biome": "catacombs", "shape": "wraith", "palette": ["#9ab0c8", "#5a6a80", "#e0f4ff"], "hp": 30, "dmg": 7, "speed": 44, "ai": "caster", "range": 120, "atkCd": 2.4, "element": "shadow", "xp": 16, "radius": 6 },
-  { "id": "bone_hulk", "name": "Colosso de Ossos", "biome": "catacombs", "shape": "golem", "palette": ["#d8d0bc", "#8a826c", "#4a2a18"], "hp": 110, "dmg": 13, "speed": 32, "ai": "charger", "range": 16, "atkCd": 1.6, "element": "physical", "xp": 30, "radius": 9 },
-
-  { "id": "crystal_slime", "name": "Gosma Cristalina", "biome": "crystal", "shape": "slime", "palette": ["#7fe3ff", "#3a8cc0", "#ffffff"], "hp": 40, "dmg": 7, "speed": 40, "ai": "melee", "range": 12, "atkCd": 1.0, "element": "ice", "xp": 14, "radius": 7 },
-  { "id": "shard_spider", "name": "Aranha de Estilhaço", "biome": "crystal", "shape": "spider", "palette": ["#a8c8ff", "#4a5a9a", "#ff4fd8"], "hp": 32, "dmg": 8, "speed": 76, "ai": "melee", "range": 12, "atkCd": 0.9, "element": "physical", "xp": 15, "radius": 6 },
-  { "id": "frost_eye", "name": "Olho Glacial", "biome": "crystal", "shape": "eye", "palette": ["#dff6ff", "#3a8cc0", "#0a2a4a"], "hp": 34, "dmg": 8, "speed": 30, "ai": "ranged", "range": 130, "atkCd": 1.6, "element": "ice", "xp": 18, "radius": 6, "projSpeed": 160 },
-  { "id": "geode_golem", "name": "Golem de Geodo", "biome": "crystal", "shape": "golem", "palette": ["#5a6a8a", "#2a3450", "#7fe3ff"], "hp": 140, "dmg": 15, "speed": 30, "ai": "charger", "range": 16, "atkCd": 1.7, "element": "physical", "xp": 34, "radius": 9 },
-  { "id": "prism_wisp", "name": "Fogo-fátuo Prismático", "biome": "crystal", "shape": "wraith", "palette": ["#ff9af0", "#7fe3ff", "#ffffff"], "hp": 26, "dmg": 9, "speed": 60, "ai": "caster", "range": 120, "atkCd": 2.2, "element": "lightning", "xp": 18, "radius": 5 },
-  { "id": "ice_beetle", "name": "Besouro Geada", "biome": "crystal", "shape": "beetle", "palette": ["#9ad8ff", "#2a5a8a", "#e0f4ff"], "hp": 52, "dmg": 9, "speed": 50, "ai": "melee", "range": 12, "atkCd": 1.1, "element": "ice", "xp": 17, "radius": 7 },
-
-  { "id": "sporeling", "name": "Esporinho", "biome": "fungal", "shape": "mushroom", "palette": ["#c06cff", "#e8d8c0", "#4a2a5a"], "hp": 30, "dmg": 7, "speed": 52, "ai": "exploder", "range": 12, "atkCd": 1.0, "element": "shadow", "xp": 14, "radius": 6 },
-  { "id": "myconid", "name": "Miconídeo Guardião", "biome": "fungal", "shape": "mushroom", "palette": ["#d84a3a", "#f0e0c8", "#5a2a18"], "hp": 70, "dmg": 11, "speed": 40, "ai": "melee", "range": 14, "atkCd": 1.2, "element": "physical", "xp": 22, "radius": 8 },
-  { "id": "rot_worm", "name": "Verme Pútrido", "biome": "fungal", "shape": "worm", "palette": ["#a8b84a", "#5a6a2a", "#ff4f4f"], "hp": 56, "dmg": 10, "speed": 46, "ai": "charger", "range": 14, "atkCd": 1.3, "element": "physical", "xp": 20, "radius": 7 },
-  { "id": "moth_witch", "name": "Mariposa Bruxa", "biome": "fungal", "shape": "bat", "palette": ["#e8c86a", "#8a5a2a", "#c06cff"], "hp": 34, "dmg": 10, "speed": 70, "ai": "caster", "range": 130, "atkCd": 2.2, "element": "shadow", "xp": 22, "radius": 6 },
-  { "id": "spore_spitter", "name": "Cuspidor de Esporos", "biome": "fungal", "shape": "eye", "palette": ["#7ad84a", "#2a5a1a", "#c06cff"], "hp": 38, "dmg": 9, "speed": 34, "ai": "ranged", "range": 130, "atkCd": 1.5, "element": "shadow", "xp": 20, "radius": 6, "projSpeed": 140 },
-  { "id": "bog_spider", "name": "Aranha do Lodo", "biome": "fungal", "shape": "spider", "palette": ["#5a7a3a", "#2a3a1a", "#e8d84a"], "hp": 44, "dmg": 10, "speed": 74, "ai": "melee", "range": 12, "atkCd": 0.9, "element": "physical", "xp": 20, "radius": 6 },
-
-  { "id": "imp", "name": "Diabrete Ígneo", "biome": "lava", "shape": "imp", "palette": ["#ff5a2e", "#8a1a0a", "#ffe04a"], "hp": 44, "dmg": 12, "speed": 72, "ai": "ranged", "range": 120, "atkCd": 1.3, "element": "fire", "xp": 24, "radius": 6, "projSpeed": 170 },
-  { "id": "magma_slime", "name": "Gosma de Magma", "biome": "lava", "shape": "slime", "palette": ["#ff8a2e", "#a83a0a", "#ffe04a"], "hp": 70, "dmg": 13, "speed": 40, "ai": "exploder", "range": 12, "atkCd": 1.0, "element": "fire", "xp": 24, "radius": 7 },
-  { "id": "hellhound", "name": "Cão Infernal", "biome": "lava", "shape": "beetle", "palette": ["#3a1a1a", "#1a0a0a", "#ff5a2e"], "hp": 60, "dmg": 14, "speed": 92, "ai": "melee", "range": 13, "atkCd": 0.9, "element": "fire", "xp": 26, "radius": 7 },
-  { "id": "obsidian_knight", "name": "Cavaleiro de Obsidiana", "biome": "lava", "shape": "skeleton", "palette": ["#2a2a3a", "#0a0a14", "#ff5a2e"], "hp": 160, "dmg": 18, "speed": 38, "ai": "charger", "range": 16, "atkCd": 1.4, "element": "fire", "xp": 40, "radius": 8 },
-  { "id": "ember_wraith", "name": "Espectro de Brasa", "biome": "lava", "shape": "wraith", "palette": ["#ffb04a", "#ff3a0a", "#fff0c0"], "hp": 48, "dmg": 15, "speed": 54, "ai": "caster", "range": 130, "atkCd": 2.1, "element": "fire", "xp": 28, "radius": 6 },
-  { "id": "lava_worm", "name": "Verme de Lava", "biome": "lava", "shape": "worm", "palette": ["#ff7a2e", "#5a1a0a", "#ffe04a"], "hp": 90, "dmg": 15, "speed": 44, "ai": "melee", "range": 14, "atkCd": 1.2, "element": "fire", "xp": 30, "radius": 8 },
-
-  { "id": "void_eye", "name": "Olho do Vazio", "biome": "void", "shape": "eye", "palette": ["#ff4fd8", "#3d2a6e", "#ffffff"], "hp": 60, "dmg": 16, "speed": 36, "ai": "ranged", "range": 140, "atkCd": 1.3, "element": "shadow", "xp": 32, "radius": 7, "projSpeed": 180 },
-  { "id": "null_stalker", "name": "Espreitador Nulo", "biome": "void", "shape": "imp", "palette": ["#1a1030", "#0a0614", "#ff4fd8"], "hp": 74, "dmg": 18, "speed": 96, "ai": "melee", "range": 13, "atkCd": 0.8, "element": "shadow", "xp": 34, "radius": 6 },
-  { "id": "star_spawn", "name": "Cria Estelar", "biome": "void", "shape": "slime", "palette": ["#7a5aff", "#2a1a6e", "#ffe9a8"], "hp": 80, "dmg": 17, "speed": 48, "ai": "exploder", "range": 12, "atkCd": 1.0, "element": "lightning", "xp": 32, "radius": 7 },
-  { "id": "abyss_weaver", "name": "Tecelã Abissal", "biome": "void", "shape": "spider", "palette": ["#3d2a6e", "#140a2a", "#7fe3ff"], "hp": 70, "dmg": 17, "speed": 80, "ai": "melee", "range": 13, "atkCd": 0.9, "element": "shadow", "xp": 34, "radius": 7 },
-  { "id": "fallen_seraph", "name": "Serafim Caído", "biome": "void", "shape": "wraith", "palette": ["#ffe9a8", "#8a7a4a", "#ff4fd8"], "hp": 64, "dmg": 20, "speed": 58, "ai": "caster", "range": 140, "atkCd": 2.0, "element": "holy", "xp": 38, "radius": 7 },
-  { "id": "void_colossus", "name": "Colosso do Vazio", "biome": "void", "shape": "golem", "palette": ["#2a1a4a", "#0a0614", "#ff4fd8"], "hp": 220, "dmg": 24, "speed": 34, "ai": "charger", "range": 17, "atkCd": 1.5, "element": "shadow", "xp": 50, "radius": 10 }
+ {
+  "id": "skeleton",
+  "name": "Esqueleto Errante",
+  "biome": "catacombs",
+  "shape": "skeleton",
+  "palette": [
+   "#e8e2d0",
+   "#9c9480",
+   "#2a2418"
+  ],
+  "hp": 34,
+  "dmg": 6,
+  "speed": 46,
+  "ai": "melee",
+  "range": 14,
+  "atkCd": 1.1,
+  "element": "physical",
+  "xp": 10,
+  "radius": 6
+ },
+ {
+  "id": "skel_archer",
+  "name": "Arqueiro Ossudo",
+  "biome": "catacombs",
+  "shape": "skeleton",
+  "palette": [
+   "#d8cfb8",
+   "#7a6f5a",
+   "#5a2a18"
+  ],
+  "hp": 24,
+  "dmg": 5,
+  "speed": 40,
+  "ai": "ranged",
+  "range": 110,
+  "atkCd": 1.8,
+  "element": "physical",
+  "xp": 12,
+  "radius": 6,
+  "projSpeed": 150
+ },
+ {
+  "id": "ghoul",
+  "name": "Carniçal",
+  "biome": "catacombs",
+  "shape": "imp",
+  "palette": [
+   "#7c8a6a",
+   "#4a5440",
+   "#c23b3b"
+  ],
+  "hp": 46,
+  "dmg": 8,
+  "speed": 58,
+  "ai": "melee",
+  "range": 14,
+  "atkCd": 1.0,
+  "element": "physical",
+  "xp": 14,
+  "radius": 7
+ },
+ {
+  "id": "crypt_bat",
+  "name": "Morcego da Cripta",
+  "biome": "catacombs",
+  "shape": "bat",
+  "palette": [
+   "#4a3a5c",
+   "#2a1f36",
+   "#ff4f4f"
+  ],
+  "hp": 16,
+  "dmg": 4,
+  "speed": 84,
+  "ai": "melee",
+  "range": 12,
+  "atkCd": 0.8,
+  "element": "physical",
+  "xp": 7,
+  "radius": 5
+ },
+ {
+  "id": "wraith",
+  "name": "Espectro Lamentoso",
+  "biome": "catacombs",
+  "shape": "wraith",
+  "palette": [
+   "#9ab0c8",
+   "#5a6a80",
+   "#e0f4ff"
+  ],
+  "hp": 30,
+  "dmg": 7,
+  "speed": 44,
+  "ai": "caster",
+  "range": 120,
+  "atkCd": 2.4,
+  "element": "shadow",
+  "xp": 16,
+  "radius": 6
+ },
+ {
+  "id": "bone_hulk",
+  "name": "Colosso de Ossos",
+  "biome": "catacombs",
+  "shape": "golem",
+  "palette": [
+   "#d8d0bc",
+   "#8a826c",
+   "#4a2a18"
+  ],
+  "hp": 110,
+  "dmg": 13,
+  "speed": 32,
+  "ai": "charger",
+  "range": 16,
+  "atkCd": 1.6,
+  "element": "physical",
+  "xp": 30,
+  "radius": 9
+ },
+ {
+  "id": "crystal_slime",
+  "name": "Gosma Cristalina",
+  "biome": "crystal",
+  "shape": "slime",
+  "palette": [
+   "#7fe3ff",
+   "#3a8cc0",
+   "#ffffff"
+  ],
+  "hp": 40,
+  "dmg": 7,
+  "speed": 40,
+  "ai": "melee",
+  "range": 12,
+  "atkCd": 1.0,
+  "element": "ice",
+  "xp": 14,
+  "radius": 7
+ },
+ {
+  "id": "shard_spider",
+  "name": "Aranha de Estilhaço",
+  "biome": "crystal",
+  "shape": "spider",
+  "palette": [
+   "#a8c8ff",
+   "#4a5a9a",
+   "#ff4fd8"
+  ],
+  "hp": 32,
+  "dmg": 8,
+  "speed": 76,
+  "ai": "melee",
+  "range": 12,
+  "atkCd": 0.9,
+  "element": "physical",
+  "xp": 15,
+  "radius": 6
+ },
+ {
+  "id": "frost_eye",
+  "name": "Olho Glacial",
+  "biome": "crystal",
+  "shape": "eye",
+  "palette": [
+   "#dff6ff",
+   "#3a8cc0",
+   "#0a2a4a"
+  ],
+  "hp": 34,
+  "dmg": 8,
+  "speed": 30,
+  "ai": "ranged",
+  "range": 130,
+  "atkCd": 1.6,
+  "element": "ice",
+  "xp": 18,
+  "radius": 6,
+  "projSpeed": 160
+ },
+ {
+  "id": "geode_golem",
+  "name": "Golem de Geodo",
+  "biome": "crystal",
+  "shape": "golem",
+  "palette": [
+   "#5a6a8a",
+   "#2a3450",
+   "#7fe3ff"
+  ],
+  "hp": 140,
+  "dmg": 15,
+  "speed": 30,
+  "ai": "charger",
+  "range": 16,
+  "atkCd": 1.7,
+  "element": "physical",
+  "xp": 34,
+  "radius": 9
+ },
+ {
+  "id": "prism_wisp",
+  "name": "Fogo-fátuo Prismático",
+  "biome": "crystal",
+  "shape": "wraith",
+  "palette": [
+   "#ff9af0",
+   "#7fe3ff",
+   "#ffffff"
+  ],
+  "hp": 26,
+  "dmg": 9,
+  "speed": 60,
+  "ai": "caster",
+  "range": 120,
+  "atkCd": 2.2,
+  "element": "lightning",
+  "xp": 18,
+  "radius": 5
+ },
+ {
+  "id": "ice_beetle",
+  "name": "Besouro Geada",
+  "biome": "crystal",
+  "shape": "beetle",
+  "palette": [
+   "#9ad8ff",
+   "#2a5a8a",
+   "#e0f4ff"
+  ],
+  "hp": 52,
+  "dmg": 9,
+  "speed": 50,
+  "ai": "melee",
+  "range": 12,
+  "atkCd": 1.1,
+  "element": "ice",
+  "xp": 17,
+  "radius": 7
+ },
+ {
+  "id": "sporeling",
+  "name": "Esporinho",
+  "biome": "fungal",
+  "shape": "mushroom",
+  "palette": [
+   "#c06cff",
+   "#e8d8c0",
+   "#4a2a5a"
+  ],
+  "hp": 30,
+  "dmg": 7,
+  "speed": 52,
+  "ai": "exploder",
+  "range": 12,
+  "atkCd": 1.0,
+  "element": "shadow",
+  "xp": 14,
+  "radius": 6
+ },
+ {
+  "id": "myconid",
+  "name": "Miconídeo Guardião",
+  "biome": "fungal",
+  "shape": "mushroom",
+  "palette": [
+   "#d84a3a",
+   "#f0e0c8",
+   "#5a2a18"
+  ],
+  "hp": 70,
+  "dmg": 11,
+  "speed": 40,
+  "ai": "melee",
+  "range": 14,
+  "atkCd": 1.2,
+  "element": "physical",
+  "xp": 22,
+  "radius": 8
+ },
+ {
+  "id": "rot_worm",
+  "name": "Verme Pútrido",
+  "biome": "fungal",
+  "shape": "worm",
+  "palette": [
+   "#a8b84a",
+   "#5a6a2a",
+   "#ff4f4f"
+  ],
+  "hp": 56,
+  "dmg": 10,
+  "speed": 46,
+  "ai": "charger",
+  "range": 14,
+  "atkCd": 1.3,
+  "element": "physical",
+  "xp": 20,
+  "radius": 7
+ },
+ {
+  "id": "moth_witch",
+  "name": "Mariposa Bruxa",
+  "biome": "fungal",
+  "shape": "bat",
+  "palette": [
+   "#e8c86a",
+   "#8a5a2a",
+   "#c06cff"
+  ],
+  "hp": 34,
+  "dmg": 10,
+  "speed": 70,
+  "ai": "caster",
+  "range": 130,
+  "atkCd": 2.2,
+  "element": "shadow",
+  "xp": 22,
+  "radius": 6
+ },
+ {
+  "id": "spore_spitter",
+  "name": "Cuspidor de Esporos",
+  "biome": "fungal",
+  "shape": "eye",
+  "palette": [
+   "#7ad84a",
+   "#2a5a1a",
+   "#c06cff"
+  ],
+  "hp": 38,
+  "dmg": 9,
+  "speed": 34,
+  "ai": "ranged",
+  "range": 130,
+  "atkCd": 1.5,
+  "element": "shadow",
+  "xp": 20,
+  "radius": 6,
+  "projSpeed": 140
+ },
+ {
+  "id": "bog_spider",
+  "name": "Aranha do Lodo",
+  "biome": "fungal",
+  "shape": "spider",
+  "palette": [
+   "#5a7a3a",
+   "#2a3a1a",
+   "#e8d84a"
+  ],
+  "hp": 44,
+  "dmg": 10,
+  "speed": 74,
+  "ai": "melee",
+  "range": 12,
+  "atkCd": 0.9,
+  "element": "physical",
+  "xp": 20,
+  "radius": 6
+ },
+ {
+  "id": "imp",
+  "name": "Diabrete Ígneo",
+  "biome": "lava",
+  "shape": "imp",
+  "palette": [
+   "#ff5a2e",
+   "#8a1a0a",
+   "#ffe04a"
+  ],
+  "hp": 44,
+  "dmg": 12,
+  "speed": 72,
+  "ai": "ranged",
+  "range": 120,
+  "atkCd": 1.3,
+  "element": "fire",
+  "xp": 24,
+  "radius": 6,
+  "projSpeed": 170
+ },
+ {
+  "id": "magma_slime",
+  "name": "Gosma de Magma",
+  "biome": "lava",
+  "shape": "slime",
+  "palette": [
+   "#ff8a2e",
+   "#a83a0a",
+   "#ffe04a"
+  ],
+  "hp": 70,
+  "dmg": 13,
+  "speed": 40,
+  "ai": "exploder",
+  "range": 12,
+  "atkCd": 1.0,
+  "element": "fire",
+  "xp": 24,
+  "radius": 7
+ },
+ {
+  "id": "hellhound",
+  "name": "Cão Infernal",
+  "biome": "lava",
+  "shape": "beetle",
+  "palette": [
+   "#3a1a1a",
+   "#1a0a0a",
+   "#ff5a2e"
+  ],
+  "hp": 60,
+  "dmg": 14,
+  "speed": 92,
+  "ai": "melee",
+  "range": 13,
+  "atkCd": 0.9,
+  "element": "fire",
+  "xp": 26,
+  "radius": 7
+ },
+ {
+  "id": "obsidian_knight",
+  "name": "Cavaleiro de Obsidiana",
+  "biome": "lava",
+  "shape": "skeleton",
+  "palette": [
+   "#2a2a3a",
+   "#0a0a14",
+   "#ff5a2e"
+  ],
+  "hp": 160,
+  "dmg": 18,
+  "speed": 38,
+  "ai": "charger",
+  "range": 16,
+  "atkCd": 1.4,
+  "element": "fire",
+  "xp": 40,
+  "radius": 8
+ },
+ {
+  "id": "ember_wraith",
+  "name": "Espectro de Brasa",
+  "biome": "lava",
+  "shape": "wraith",
+  "palette": [
+   "#ffb04a",
+   "#ff3a0a",
+   "#fff0c0"
+  ],
+  "hp": 48,
+  "dmg": 15,
+  "speed": 54,
+  "ai": "caster",
+  "range": 130,
+  "atkCd": 2.1,
+  "element": "fire",
+  "xp": 28,
+  "radius": 6
+ },
+ {
+  "id": "lava_worm",
+  "name": "Verme de Lava",
+  "biome": "lava",
+  "shape": "worm",
+  "palette": [
+   "#ff7a2e",
+   "#5a1a0a",
+   "#ffe04a"
+  ],
+  "hp": 90,
+  "dmg": 15,
+  "speed": 44,
+  "ai": "melee",
+  "range": 14,
+  "atkCd": 1.2,
+  "element": "fire",
+  "xp": 30,
+  "radius": 8
+ },
+ {
+  "id": "void_eye",
+  "name": "Olho do Vazio",
+  "biome": "void",
+  "shape": "eye",
+  "palette": [
+   "#ff4fd8",
+   "#3d2a6e",
+   "#ffffff"
+  ],
+  "hp": 60,
+  "dmg": 16,
+  "speed": 36,
+  "ai": "ranged",
+  "range": 140,
+  "atkCd": 1.3,
+  "element": "shadow",
+  "xp": 32,
+  "radius": 7,
+  "projSpeed": 180
+ },
+ {
+  "id": "null_stalker",
+  "name": "Espreitador Nulo",
+  "biome": "void",
+  "shape": "imp",
+  "palette": [
+   "#1a1030",
+   "#0a0614",
+   "#ff4fd8"
+  ],
+  "hp": 74,
+  "dmg": 18,
+  "speed": 96,
+  "ai": "melee",
+  "range": 13,
+  "atkCd": 0.8,
+  "element": "shadow",
+  "xp": 34,
+  "radius": 6
+ },
+ {
+  "id": "star_spawn",
+  "name": "Cria Estelar",
+  "biome": "void",
+  "shape": "slime",
+  "palette": [
+   "#7a5aff",
+   "#2a1a6e",
+   "#ffe9a8"
+  ],
+  "hp": 80,
+  "dmg": 17,
+  "speed": 48,
+  "ai": "exploder",
+  "range": 12,
+  "atkCd": 1.0,
+  "element": "lightning",
+  "xp": 32,
+  "radius": 7
+ },
+ {
+  "id": "abyss_weaver",
+  "name": "Tecelã Abissal",
+  "biome": "void",
+  "shape": "spider",
+  "palette": [
+   "#3d2a6e",
+   "#140a2a",
+   "#7fe3ff"
+  ],
+  "hp": 70,
+  "dmg": 17,
+  "speed": 80,
+  "ai": "melee",
+  "range": 13,
+  "atkCd": 0.9,
+  "element": "shadow",
+  "xp": 34,
+  "radius": 7
+ },
+ {
+  "id": "fallen_seraph",
+  "name": "Serafim Caído",
+  "biome": "void",
+  "shape": "wraith",
+  "palette": [
+   "#ffe9a8",
+   "#8a7a4a",
+   "#ff4fd8"
+  ],
+  "hp": 64,
+  "dmg": 20,
+  "speed": 58,
+  "ai": "caster",
+  "range": 140,
+  "atkCd": 2.0,
+  "element": "holy",
+  "xp": 38,
+  "radius": 7
+ },
+ {
+  "id": "void_colossus",
+  "name": "Colosso do Vazio",
+  "biome": "void",
+  "shape": "golem",
+  "palette": [
+   "#2a1a4a",
+   "#0a0614",
+   "#ff4fd8"
+  ],
+  "hp": 220,
+  "dmg": 24,
+  "speed": 34,
+  "ai": "charger",
+  "range": 17,
+  "atkCd": 1.5,
+  "element": "shadow",
+  "xp": 50,
+  "radius": 10
+ },
+ {
+  "id": "forgotten_knight",
+  "name": "Cavaleiro Esquecido",
+  "biome": "catacombs",
+  "shape": "skeleton",
+  "palette": [
+   "#b8b0a0",
+   "#5a5040",
+   "#4a8cff"
+  ],
+  "hp": 80,
+  "dmg": 11,
+  "speed": 40,
+  "ai": "melee",
+  "range": 16,
+  "atkCd": 1.3,
+  "element": "physical",
+  "xp": 22,
+  "radius": 8
+ },
+ {
+  "id": "grave_mage",
+  "name": "Necromante Ossudo",
+  "biome": "catacombs",
+  "shape": "wraith",
+  "palette": [
+   "#c8b8e8",
+   "#4a3a6a",
+   "#7ad84a"
+  ],
+  "hp": 36,
+  "dmg": 9,
+  "speed": 40,
+  "ai": "caster",
+  "range": 130,
+  "atkCd": 2.2,
+  "element": "shadow",
+  "xp": 20,
+  "radius": 6
+ },
+ {
+  "id": "bone_crab",
+  "name": "Caranguejo de Ossos",
+  "biome": "catacombs",
+  "shape": "crab",
+  "palette": [
+   "#e8e0cc",
+   "#8a7a60",
+   "#ff4f4f"
+  ],
+  "hp": 50,
+  "dmg": 9,
+  "speed": 54,
+  "ai": "melee",
+  "range": 12,
+  "atkCd": 1.0,
+  "element": "physical",
+  "xp": 16,
+  "radius": 7
+ },
+ {
+  "id": "tomb_serpent",
+  "name": "Serpente da Tumba",
+  "biome": "catacombs",
+  "shape": "worm",
+  "palette": [
+   "#6a7a5a",
+   "#3a4a2a",
+   "#ffd23f"
+  ],
+  "hp": 44,
+  "dmg": 9,
+  "speed": 60,
+  "ai": "charger",
+  "range": 14,
+  "atkCd": 1.2,
+  "element": "shadow",
+  "xp": 18,
+  "radius": 7
+ },
+ {
+  "id": "crystal_elemental",
+  "name": "Elemental Cristalino",
+  "biome": "crystal",
+  "shape": "elemental",
+  "palette": [
+   "#7fe3ff",
+   "#3a8cc0",
+   "#ffffff"
+  ],
+  "hp": 70,
+  "dmg": 12,
+  "speed": 44,
+  "ai": "caster",
+  "range": 130,
+  "atkCd": 2.0,
+  "element": "ice",
+  "xp": 26,
+  "radius": 8
+ },
+ {
+  "id": "frost_crab",
+  "name": "Caranguejo Glacial",
+  "biome": "crystal",
+  "shape": "crab",
+  "palette": [
+   "#bfe8ff",
+   "#4a7aa0",
+   "#7fe3ff"
+  ],
+  "hp": 62,
+  "dmg": 11,
+  "speed": 52,
+  "ai": "melee",
+  "range": 12,
+  "atkCd": 1.0,
+  "element": "ice",
+  "xp": 22,
+  "radius": 7
+ },
+ {
+  "id": "shard_wisp",
+  "name": "Lasca Viva",
+  "biome": "crystal",
+  "shape": "elemental",
+  "palette": [
+   "#ff9af0",
+   "#8a4ac0",
+   "#ffffff"
+  ],
+  "hp": 34,
+  "dmg": 10,
+  "speed": 80,
+  "ai": "exploder",
+  "range": 12,
+  "atkCd": 1.0,
+  "element": "lightning",
+  "xp": 20,
+  "radius": 6
+ },
+ {
+  "id": "ice_archer",
+  "name": "Arqueiro de Gelo",
+  "biome": "crystal",
+  "shape": "skeleton",
+  "palette": [
+   "#dff6ff",
+   "#5a8ab0",
+   "#7fe3ff"
+  ],
+  "hp": 40,
+  "dmg": 10,
+  "speed": 42,
+  "ai": "ranged",
+  "range": 130,
+  "atkCd": 1.6,
+  "element": "ice",
+  "xp": 22,
+  "radius": 6,
+  "projSpeed": 170
+ },
+ {
+  "id": "treant",
+  "name": "Ent Apodrecido",
+  "biome": "fungal",
+  "shape": "treant",
+  "palette": [
+   "#5a4a2a",
+   "#3a6a2a",
+   "#c06cff"
+  ],
+  "hp": 140,
+  "dmg": 15,
+  "speed": 32,
+  "ai": "charger",
+  "range": 16,
+  "atkCd": 1.6,
+  "element": "physical",
+  "xp": 36,
+  "radius": 10
+ },
+ {
+  "id": "fungal_elemental",
+  "name": "Elemental de Esporos",
+  "biome": "fungal",
+  "shape": "elemental",
+  "palette": [
+   "#c06cff",
+   "#4a2a5a",
+   "#7ad84a"
+  ],
+  "hp": 60,
+  "dmg": 12,
+  "speed": 46,
+  "ai": "caster",
+  "range": 130,
+  "atkCd": 2.1,
+  "element": "shadow",
+  "xp": 28,
+  "radius": 8
+ },
+ {
+  "id": "swamp_crab",
+  "name": "Caranguejo do Pântano",
+  "biome": "fungal",
+  "shape": "crab",
+  "palette": [
+   "#7a9a4a",
+   "#3a5a2a",
+   "#e8d84a"
+  ],
+  "hp": 66,
+  "dmg": 12,
+  "speed": 52,
+  "ai": "melee",
+  "range": 12,
+  "atkCd": 1.0,
+  "element": "physical",
+  "xp": 24,
+  "radius": 7
+ },
+ {
+  "id": "plague_bat",
+  "name": "Morcego da Praga",
+  "biome": "fungal",
+  "shape": "bat",
+  "palette": [
+   "#5a7a3a",
+   "#2a3a1a",
+   "#c06cff"
+  ],
+  "hp": 32,
+  "dmg": 10,
+  "speed": 90,
+  "ai": "melee",
+  "range": 12,
+  "atkCd": 0.8,
+  "element": "shadow",
+  "xp": 18,
+  "radius": 5
+ },
+ {
+  "id": "fire_elemental",
+  "name": "Elemental de Fogo",
+  "biome": "lava",
+  "shape": "elemental",
+  "palette": [
+   "#ff7a2e",
+   "#a83a0a",
+   "#ffe04a"
+  ],
+  "hp": 80,
+  "dmg": 16,
+  "speed": 50,
+  "ai": "caster",
+  "range": 130,
+  "atkCd": 1.9,
+  "element": "fire",
+  "xp": 32,
+  "radius": 8
+ },
+ {
+  "id": "magma_crab",
+  "name": "Caranguejo de Magma",
+  "biome": "lava",
+  "shape": "crab",
+  "palette": [
+   "#5a2a1a",
+   "#2a0a0a",
+   "#ff7a2e"
+  ],
+  "hp": 100,
+  "dmg": 16,
+  "speed": 48,
+  "ai": "melee",
+  "range": 13,
+  "atkCd": 1.1,
+  "element": "fire",
+  "xp": 32,
+  "radius": 8
+ },
+ {
+  "id": "salamander",
+  "name": "Salamandra Ígnea",
+  "biome": "lava",
+  "shape": "worm",
+  "palette": [
+   "#ff5a2e",
+   "#8a1a0a",
+   "#ffe04a"
+  ],
+  "hp": 70,
+  "dmg": 15,
+  "speed": 70,
+  "ai": "charger",
+  "range": 14,
+  "atkCd": 1.1,
+  "element": "fire",
+  "xp": 30,
+  "radius": 7
+ },
+ {
+  "id": "demon_archer",
+  "name": "Arqueiro Demoníaco",
+  "biome": "lava",
+  "shape": "imp",
+  "palette": [
+   "#a82a2a",
+   "#4a0a0a",
+   "#ffb04a"
+  ],
+  "hp": 60,
+  "dmg": 15,
+  "speed": 50,
+  "ai": "ranged",
+  "range": 140,
+  "atkCd": 1.4,
+  "element": "fire",
+  "xp": 30,
+  "radius": 6,
+  "projSpeed": 190
+ },
+ {
+  "id": "void_elemental",
+  "name": "Elemental do Vazio",
+  "biome": "void",
+  "shape": "elemental",
+  "palette": [
+   "#3d2a6e",
+   "#140a2a",
+   "#ff4fd8"
+  ],
+  "hp": 90,
+  "dmg": 19,
+  "speed": 50,
+  "ai": "caster",
+  "range": 140,
+  "atkCd": 1.8,
+  "element": "shadow",
+  "xp": 40,
+  "radius": 8
+ },
+ {
+  "id": "void_crab",
+  "name": "Caranguejo Astral",
+  "biome": "void",
+  "shape": "crab",
+  "palette": [
+   "#2a1a4a",
+   "#0a0614",
+   "#7fe3ff"
+  ],
+  "hp": 110,
+  "dmg": 19,
+  "speed": 50,
+  "ai": "melee",
+  "range": 13,
+  "atkCd": 1.0,
+  "element": "shadow",
+  "xp": 40,
+  "radius": 8
+ },
+ {
+  "id": "star_treant",
+  "name": "Árvore Estelar",
+  "biome": "void",
+  "shape": "treant",
+  "palette": [
+   "#2a1a4a",
+   "#7a5aff",
+   "#ffe9a8"
+  ],
+  "hp": 200,
+  "dmg": 22,
+  "speed": 30,
+  "ai": "charger",
+  "range": 17,
+  "atkCd": 1.5,
+  "element": "lightning",
+  "xp": 48,
+  "radius": 10
+ },
+ {
+  "id": "abyss_knight",
+  "name": "Cavaleiro do Abismo",
+  "biome": "void",
+  "shape": "skeleton",
+  "palette": [
+   "#3d2a6e",
+   "#140a2a",
+   "#ff4fd8"
+  ],
+  "hp": 150,
+  "dmg": 22,
+  "speed": 44,
+  "ai": "melee",
+  "range": 16,
+  "atkCd": 1.2,
+  "element": "shadow",
+  "xp": 46,
+  "radius": 9
+ }
 ]

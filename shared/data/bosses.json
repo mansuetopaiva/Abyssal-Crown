@@ -1,22 +1,517 @@
 [
-  { "id": "morvath", "name": "Morvath", "title": "o Devorador de Ecos", "shape": "wraith", "palette": ["#9ab0c8", "#2a3450", "#ff4f4f"], "hp": 900, "dmg": 16, "speed": 40, "element": "shadow",
-    "phases": [["nova", "circle", "summon"], ["nova", "line", "circle", "summon"], ["meteor", "nova", "line", "charge"]], "summon": "skeleton" },
-  { "id": "kragg", "name": "Kragg", "title": "o Rei Ossário", "shape": "skeleton", "palette": ["#f0e8d0", "#8a7a5a", "#ffd23f"], "hp": 1100, "dmg": 18, "speed": 46, "element": "physical",
-    "phases": [["charge", "circle"], ["charge", "circle", "summon"], ["charge", "nova", "meteor", "summon"]], "summon": "skel_archer" },
-  { "id": "seline", "name": "Seline", "title": "a Rainha de Vidro", "shape": "eye", "palette": ["#dff6ff", "#3a8cc0", "#ff4fd8"], "hp": 1250, "dmg": 20, "speed": 34, "element": "ice",
-    "phases": [["nova", "line"], ["nova", "line", "meteor"], ["nova", "meteor", "line", "circle"]], "summon": "frost_eye" },
-  { "id": "gorrum", "name": "Gorrum", "title": "o Coração da Geoda", "shape": "golem", "palette": ["#5a6a8a", "#1a2440", "#7fe3ff"], "hp": 1600, "dmg": 24, "speed": 30, "element": "physical",
-    "phases": [["charge", "circle"], ["charge", "circle", "meteor"], ["charge", "circle", "meteor", "summon"]], "summon": "crystal_slime" },
-  { "id": "mother_spore", "name": "Mãe-Esporo", "title": "a Que Apodrece o Mundo", "shape": "mushroom", "palette": ["#c06cff", "#f0e0c8", "#4a2a5a"], "hp": 1700, "dmg": 24, "speed": 26, "element": "shadow",
-    "phases": [["summon", "nova"], ["summon", "nova", "circle"], ["summon", "meteor", "nova", "circle"]], "summon": "sporeling" },
-  { "id": "vexis", "name": "Vexis", "title": "a Tecelã de Pesadelos", "shape": "spider", "palette": ["#3d2a6e", "#140a2a", "#7ad84a"], "hp": 1800, "dmg": 26, "speed": 64, "element": "physical",
-    "phases": [["charge", "nova"], ["charge", "nova", "summon"], ["charge", "line", "nova", "summon"]], "summon": "bog_spider" },
-  { "id": "ignar", "name": "Ignar", "title": "o Forjador de Cinzas", "shape": "imp", "palette": ["#ff5a2e", "#5a0a0a", "#ffe04a"], "hp": 2100, "dmg": 30, "speed": 50, "element": "fire",
-    "phases": [["meteor", "nova"], ["meteor", "nova", "line"], ["meteor", "nova", "line", "circle", "charge"]], "summon": "imp" },
-  { "id": "azhkar", "name": "Azhkar", "title": "o Senhor da Muralha Rubra", "shape": "golem", "palette": ["#2a2a3a", "#0a0a14", "#ff5a2e"], "hp": 2500, "dmg": 34, "speed": 36, "element": "fire",
-    "phases": [["charge", "circle"], ["charge", "circle", "meteor", "summon"], ["charge", "circle", "meteor", "line", "nova"]], "summon": "obsidian_knight" },
-  { "id": "nhyl", "name": "Nhyl", "title": "o Olho Que Não Dorme", "shape": "eye", "palette": ["#ff4fd8", "#140a2a", "#ffffff"], "hp": 2700, "dmg": 36, "speed": 30, "element": "shadow",
-    "phases": [["line", "nova"], ["line", "nova", "summon"], ["line", "nova", "meteor", "summon"]], "summon": "void_eye" },
-  { "id": "aurelion", "name": "Aurelion", "title": "a Coroa Abissal", "shape": "wraith", "palette": ["#ffe9a8", "#3d2a6e", "#ff4fd8"], "hp": 3200, "dmg": 40, "speed": 48, "element": "holy",
-    "phases": [["nova", "line", "circle"], ["nova", "line", "circle", "meteor", "summon"], ["nova", "line", "meteor", "charge", "summon"]], "summon": "fallen_seraph" }
+ {
+  "id": "morvath",
+  "name": "Morvath",
+  "title": "o Devorador de Ecos",
+  "shape": "wraith",
+  "palette": [
+   "#9ab0c8",
+   "#2a3450",
+   "#ff4f4f"
+  ],
+  "hp": 900,
+  "dmg": 16,
+  "speed": 40,
+  "element": "shadow",
+  "phases": [
+   [
+    "nova",
+    "circle",
+    "summon"
+   ],
+   [
+    "nova",
+    "line",
+    "circle",
+    "summon"
+   ],
+   [
+    "meteor",
+    "nova",
+    "line",
+    "charge"
+   ]
+  ],
+  "summon": "skeleton"
+ },
+ {
+  "id": "kragg",
+  "name": "Kragg",
+  "title": "o Rei Ossário",
+  "shape": "skeleton",
+  "palette": [
+   "#f0e8d0",
+   "#8a7a5a",
+   "#ffd23f"
+  ],
+  "hp": 1100,
+  "dmg": 18,
+  "speed": 46,
+  "element": "physical",
+  "phases": [
+   [
+    "charge",
+    "circle"
+   ],
+   [
+    "charge",
+    "circle",
+    "summon"
+   ],
+   [
+    "charge",
+    "nova",
+    "meteor",
+    "summon"
+   ]
+  ],
+  "summon": "skel_archer"
+ },
+ {
+  "id": "seline",
+  "name": "Seline",
+  "title": "a Rainha de Vidro",
+  "shape": "eye",
+  "palette": [
+   "#dff6ff",
+   "#3a8cc0",
+   "#ff4fd8"
+  ],
+  "hp": 1250,
+  "dmg": 20,
+  "speed": 34,
+  "element": "ice",
+  "phases": [
+   [
+    "nova",
+    "line"
+   ],
+   [
+    "nova",
+    "line",
+    "meteor"
+   ],
+   [
+    "nova",
+    "meteor",
+    "line",
+    "circle"
+   ]
+  ],
+  "summon": "frost_eye"
+ },
+ {
+  "id": "gorrum",
+  "name": "Gorrum",
+  "title": "o Coração da Geoda",
+  "shape": "golem",
+  "palette": [
+   "#5a6a8a",
+   "#1a2440",
+   "#7fe3ff"
+  ],
+  "hp": 1600,
+  "dmg": 24,
+  "speed": 30,
+  "element": "physical",
+  "phases": [
+   [
+    "charge",
+    "circle"
+   ],
+   [
+    "charge",
+    "circle",
+    "meteor"
+   ],
+   [
+    "charge",
+    "circle",
+    "meteor",
+    "summon"
+   ]
+  ],
+  "summon": "crystal_slime"
+ },
+ {
+  "id": "mother_spore",
+  "name": "Mãe-Esporo",
+  "title": "a Que Apodrece o Mundo",
+  "shape": "mushroom",
+  "palette": [
+   "#c06cff",
+   "#f0e0c8",
+   "#4a2a5a"
+  ],
+  "hp": 1700,
+  "dmg": 24,
+  "speed": 26,
+  "element": "shadow",
+  "phases": [
+   [
+    "summon",
+    "nova"
+   ],
+   [
+    "summon",
+    "nova",
+    "circle"
+   ],
+   [
+    "summon",
+    "meteor",
+    "nova",
+    "circle"
+   ]
+  ],
+  "summon": "sporeling"
+ },
+ {
+  "id": "vexis",
+  "name": "Vexis",
+  "title": "a Tecelã de Pesadelos",
+  "shape": "spider",
+  "palette": [
+   "#3d2a6e",
+   "#140a2a",
+   "#7ad84a"
+  ],
+  "hp": 1800,
+  "dmg": 26,
+  "speed": 64,
+  "element": "physical",
+  "phases": [
+   [
+    "charge",
+    "nova"
+   ],
+   [
+    "charge",
+    "nova",
+    "summon"
+   ],
+   [
+    "charge",
+    "line",
+    "nova",
+    "summon"
+   ]
+  ],
+  "summon": "bog_spider"
+ },
+ {
+  "id": "ignar",
+  "name": "Ignar",
+  "title": "o Forjador de Cinzas",
+  "shape": "imp",
+  "palette": [
+   "#ff5a2e",
+   "#5a0a0a",
+   "#ffe04a"
+  ],
+  "hp": 2100,
+  "dmg": 30,
+  "speed": 50,
+  "element": "fire",
+  "phases": [
+   [
+    "meteor",
+    "nova"
+   ],
+   [
+    "meteor",
+    "nova",
+    "line"
+   ],
+   [
+    "meteor",
+    "nova",
+    "line",
+    "circle",
+    "charge"
+   ]
+  ],
+  "summon": "imp"
+ },
+ {
+  "id": "azhkar",
+  "name": "Azhkar",
+  "title": "o Senhor da Muralha Rubra",
+  "shape": "golem",
+  "palette": [
+   "#2a2a3a",
+   "#0a0a14",
+   "#ff5a2e"
+  ],
+  "hp": 2500,
+  "dmg": 34,
+  "speed": 36,
+  "element": "fire",
+  "phases": [
+   [
+    "charge",
+    "circle"
+   ],
+   [
+    "charge",
+    "circle",
+    "meteor",
+    "summon"
+   ],
+   [
+    "charge",
+    "circle",
+    "meteor",
+    "line",
+    "nova"
+   ]
+  ],
+  "summon": "obsidian_knight"
+ },
+ {
+  "id": "nhyl",
+  "name": "Nhyl",
+  "title": "o Olho Que Não Dorme",
+  "shape": "eye",
+  "palette": [
+   "#ff4fd8",
+   "#140a2a",
+   "#ffffff"
+  ],
+  "hp": 2700,
+  "dmg": 36,
+  "speed": 30,
+  "element": "shadow",
+  "phases": [
+   [
+    "line",
+    "nova"
+   ],
+   [
+    "line",
+    "nova",
+    "summon"
+   ],
+   [
+    "line",
+    "nova",
+    "meteor",
+    "summon"
+   ]
+  ],
+  "summon": "void_eye"
+ },
+ {
+  "id": "aurelion",
+  "name": "Aurelion",
+  "title": "a Coroa Abissal",
+  "shape": "wraith",
+  "palette": [
+   "#ffe9a8",
+   "#3d2a6e",
+   "#ff4fd8"
+  ],
+  "hp": 3200,
+  "dmg": 40,
+  "speed": 48,
+  "element": "holy",
+  "phases": [
+   [
+    "nova",
+    "line",
+    "circle"
+   ],
+   [
+    "nova",
+    "line",
+    "circle",
+    "meteor",
+    "summon"
+   ],
+   [
+    "nova",
+    "line",
+    "meteor",
+    "charge",
+    "summon"
+   ]
+  ],
+  "summon": "fallen_seraph"
+ },
+ {
+  "id": "thalgor",
+  "name": "Thalgor",
+  "title": "o Gigante de Cristal",
+  "shape": "elemental",
+  "palette": [
+   "#7fe3ff",
+   "#2a5a8a",
+   "#ffffff"
+  ],
+  "hp": 3600,
+  "dmg": 44,
+  "speed": 34,
+  "element": "ice",
+  "phases": [
+   [
+    "nova",
+    "meteor"
+   ],
+   [
+    "nova",
+    "meteor",
+    "circle",
+    "summon"
+   ],
+   [
+    "nova",
+    "meteor",
+    "line",
+    "circle",
+    "summon"
+   ]
+  ],
+  "summon": "shard_wisp"
+ },
+ {
+  "id": "ghoras",
+  "name": "Ghoras",
+  "title": "o Rei Caranguejo",
+  "shape": "crab",
+  "palette": [
+   "#5a2a1a",
+   "#2a0a0a",
+   "#ff7a2e"
+  ],
+  "hp": 4000,
+  "dmg": 48,
+  "speed": 52,
+  "element": "fire",
+  "phases": [
+   [
+    "charge",
+    "circle"
+   ],
+   [
+    "charge",
+    "circle",
+    "nova",
+    "summon"
+   ],
+   [
+    "charge",
+    "nova",
+    "meteor",
+    "circle"
+   ]
+  ],
+  "summon": "magma_crab"
+ },
+ {
+  "id": "ylmira",
+  "name": "Ylmira",
+  "title": "a Árvore-Mãe Corrompida",
+  "shape": "treant",
+  "palette": [
+   "#3a2a1a",
+   "#4a7a2a",
+   "#c06cff"
+  ],
+  "hp": 4500,
+  "dmg": 50,
+  "speed": 26,
+  "element": "shadow",
+  "phases": [
+   [
+    "summon",
+    "meteor"
+   ],
+   [
+    "summon",
+    "meteor",
+    "line"
+   ],
+   [
+    "summon",
+    "meteor",
+    "line",
+    "nova",
+    "circle"
+   ]
+  ],
+  "summon": "sporeling"
+ },
+ {
+  "id": "zerath",
+  "name": "Zerath",
+  "title": "o Arauto do Vazio",
+  "shape": "elemental",
+  "palette": [
+   "#3d2a6e",
+   "#140a2a",
+   "#ff4fd8"
+  ],
+  "hp": 5000,
+  "dmg": 54,
+  "speed": 40,
+  "element": "shadow",
+  "phases": [
+   [
+    "line",
+    "nova"
+   ],
+   [
+    "line",
+    "nova",
+    "meteor",
+    "summon"
+   ],
+   [
+    "line",
+    "nova",
+    "meteor",
+    "charge",
+    "circle"
+   ]
+  ],
+  "summon": "void_eye"
+ },
+ {
+  "id": "crown",
+  "name": "A Coroa",
+  "title": "Soberana do Abismo",
+  "shape": "wraith",
+  "palette": [
+   "#ffd23f",
+   "#3d2a6e",
+   "#ff4fd8"
+  ],
+  "hp": 6000,
+  "dmg": 60,
+  "speed": 46,
+  "element": "holy",
+  "phases": [
+   [
+    "nova",
+    "line",
+    "meteor"
+   ],
+   [
+    "nova",
+    "line",
+    "meteor",
+    "summon",
+    "circle"
+   ],
+   [
+    "nova",
+    "line",
+    "meteor",
+    "charge",
+    "summon",
+    "circle"
+   ]
+  ],
+  "summon": "fallen_seraph"
+ }
 ]

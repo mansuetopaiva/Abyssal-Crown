@@ -1,7 +1,7 @@
-import { SKILL_UNLOCK_LEVELS, ATTR_LABEL, ATTRS, CHECKPOINT_EVERY, ELEMENT_LABEL, ELEMENTS, RANK_INFO, RANKS, SLOT_LABEL, SLOTS, xpForLevel, type Slot } from '../../../shared/constants';
+import { ATTR_LABEL, ATTRS, CHECKPOINT_EVERY, ELEMENT_LABEL, ELEMENTS, RANK_INFO, RANKS, SLOT_LABEL, SLOTS, xpForLevel, type Slot } from '../../../shared/constants';
 import { GEM_SHOP, MAX_GEM_TIER, combineCost, gemPrice, parseGemKey, potionPrice, refineChance, refineCost, repairCost, unsocketCost } from '../../../shared/economy';
 import { AFFIX_BY_STAT, SOCKET_GEMS, UNIQUES, WEAPONS } from '../../../shared/loot';
-import { CLASS_BY_ID, allSkills, itemBonuses, itemPower } from '../../../shared/stats';
+import { CLASS_BY_ID, itemBonuses, itemPower, skillUnlockLevel, validLoadout } from '../../../shared/stats';
 import type { Item } from '../../../shared/types';
 import { api } from '../api';
 import { $, fmt, h } from '../dom';
@@ -235,11 +235,13 @@ export class Panels {
     for (const e of ELEMENTS) if (e !== 'physical') attrs.append(h('dt', { text: `Resist. ${ELEMENT_LABEL[e]}` }), h('dd', { text: `${Math.round(s.res[e] * 100)}%` }));
     return [
       h('p', null, h('b', { text: `${c.name} — ${cls.name} nível ${c.level}` }), ' ', h('span', { class: 'muted', text: `XP ${fmt(c.xp)}/${fmt(xpForLevel(c.level))} · Andar máx. ${c.maxFloor} · Checkpoint ${c.checkpoint}` })),
-      h('h3', { text: 'Habilidades' }),
-      h('div', { class: 'skill-desc' }, ...allSkills(cls).map((sk, i) => {
-        const locked = c.level < SKILL_UNLOCK_LEVELS[i];
-        return h('div', { class: locked ? 'locked' : '' }, h('b', { text: `${locked ? '🔒 ' : ''}[${i === 4 ? 'R' : i + 1}] ${sk.name}` }), h('br'), sk.desc, h('br'),
-          h('span', { class: 'muted', text: locked ? `Liberada no nível ${SKILL_UNLOCK_LEVELS[i]}` : `${sk.mana} mana · recarga ${sk.cd}s` }));
+      h('h3', { text: 'Barra de habilidades (teclas 1–4)' }),
+      this.loadoutEditor(cls, c),
+      h('h3', { text: 'Todas as habilidades' }),
+      h('div', { class: 'skill-desc' }, ...[...cls.skills, cls.ultimate].map((sk, i) => {
+        const lv = skillUnlockLevel(sk), locked = c.level < lv;
+        return h('div', { class: locked ? 'locked' : '' }, h('b', { text: `${locked ? '🔒 ' : ''}${i === cls.skills.length ? '[R] ' : ''}${sk.name}` }), h('br'), sk.desc, h('br'),
+          h('span', { class: 'muted', text: locked ? `Liberada no nível ${lv}` : `${sk.mana} mana · recarga ${sk.cd}s` }));
       })),
       h('h3', { text: `Talentos — ${free} ponto(s) livre(s)` }),
       h('div', { class: 'talent-grid' }, ...cls.talents.map((t) => {
@@ -252,6 +254,29 @@ export class Panels {
         h('button', { class: 'btn small', onclick: () => this.g.send({ t: 'cosmetic', id: '' }) }, 'Nenhum'),
         ...c.data.cosmetics.map((id: string) => h('button', { class: `btn small${c.data.cosmetic === id ? ' gold' : ''}`, onclick: () => this.g.send({ t: 'cosmetic', id }) }, GEM_SHOP.find((x) => x.id === id)?.name ?? id)))) : null,
     ].filter(Boolean) as HTMLElement[];
+  }
+
+  private loadoutEditor(cls: any, c: any) {
+    const lo = [...validLoadout(cls, c.data.loadout)];
+    const form = h('div', { class: 'row', style: { flexWrap: 'wrap', gap: '8px' } });
+    lo.forEach((cur, slot) => {
+      const sel = h('select', { 'aria-label': `Habilidade da tecla ${slot + 1}` }) as HTMLSelectElement;
+      cls.skills.forEach((sk: any, i: number) => {
+        const lv = skillUnlockLevel(sk);
+        const opt = h('option', { value: i, disabled: c.level < lv, text: `${slot + 1}: ${sk.name}${c.level < lv ? ` (nv ${lv})` : ''}` }) as HTMLOptionElement;
+        if (i === cur) opt.selected = true;
+        sel.append(opt);
+      });
+      sel.onchange = () => {
+        const next = [...lo];
+        const v = Number(sel.value), other = next.indexOf(v);
+        if (other >= 0) next[other] = next[slot]; // troca de lugar se já estiver na barra
+        next[slot] = v;
+        this.g.send({ t: 'loadout', slots: next });
+      };
+      form.append(sel);
+    });
+    return form;
   }
 
   // ---------- missões ----------

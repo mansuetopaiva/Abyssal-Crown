@@ -87,6 +87,7 @@ form label.check input { width: auto; accent-color: var(--gold); }
 .class-opt label small { color: var(--muted); }
 .class-opt input:checked + label { border-color: var(--gold); background: #2a2030; }
 .class-opt input:focus-visible + label { outline: 2px solid var(--gold-2); }
+select { background: var(--ink); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 8px; font: inherit; }
 fieldset { border: 0; padding: 0; margin: 16px 0 0; }
 legend { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
 

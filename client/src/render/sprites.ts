@@ -275,7 +275,11 @@ export function itemIcon(slotType: string, baseType: string, color: string): HTM
   g.fillStyle = '#000';
   g.strokeStyle = '#000';
   const px = (pts: number[][]) => pts.forEach(([x, y, w = 1, h = 1]) => g.fillRect(x, y, w, h));
-  switch (baseType) {
+  const ICON_ALIAS: Record<string, string> = {
+    greatsword: 'sword', katana: 'sword', greataxe: 'axe', shortbow: 'bow', scepter: 'wand', flamestaff: 'staff', froststaff: 'staff',
+    spikeshield: 'shield', tome: 'grimoire', hood: 'helm', hat: 'helm', leather: 'armor', robe: 'armor', wraps: 'gloves', shoes: 'boots', necklace: 'amulet', band: 'ring',
+  };
+  switch (ICON_ALIAS[baseType] ?? baseType) {
     case 'sword': px([[12, 1, 2, 2], [11, 3, 2, 2], [10, 4, 2, 2], [9, 5, 2, 2], [8, 6, 2, 2], [7, 7, 2, 2], [6, 8, 2, 2], [3, 9, 6, 2], [5, 11, 2, 2], [3, 13, 2, 2]]); break;
     case 'dagger': px([[11, 3, 2, 2], [10, 4, 2, 2], [9, 5, 2, 2], [8, 6, 2, 2], [5, 8, 5, 2], [6, 10, 2, 2], [4, 12, 2, 2]]); break;
     case 'axe': px([[5, 2, 2, 13], [7, 2, 4, 2], [7, 4, 6, 3], [7, 7, 4, 2]]); break;

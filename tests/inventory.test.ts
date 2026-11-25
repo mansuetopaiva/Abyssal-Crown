@@ -4,7 +4,8 @@ import { equip, unequip, sortInventory, addToInventory } from '../server/game/in
 import { newCharacterData } from '../server/game/character';
 import { rollItem } from '../shared/loot';
 import { mulberry32 } from '../shared/rng';
-import { RANKS, SKILL_UNLOCK_LEVELS, skillUnlocked } from '../shared/constants';
+import { RANKS } from '../shared/constants';
+import { CLASS_BY_ID, barSkills, skillUnlockLevel, validLoadout } from '../shared/stats';
 import type { Character } from '../shared/types';
 
 const mkChar = (): Character => ({ id: 1, userId: 1, name: 'T', classId: 'warrior', level: 1, xp: 0, gold: 0, gems: 0, maxFloor: 0, checkpoint: 1, data: newCharacterData('warrior') });
@@ -51,9 +52,21 @@ test('arma de duas mãos move o escudo para o inventário', () => {
   assert.ok(c.data.inventory.some((i) => i?.id === shield.id));
 });
 
-test('habilidades são liberadas conforme o nível', () => {
-  assert.equal(skillUnlocked(1, 0), true);
-  assert.equal(skillUnlocked(1, 1), false);
-  assert.equal(skillUnlocked(SKILL_UNLOCK_LEVELS[4] - 1, 4), false);
-  assert.equal(skillUnlocked(SKILL_UNLOCK_LEVELS[4], 4), true);
+test('cada classe tem 8 habilidades + ultimate, liberadas em níveis crescentes', () => {
+  for (const cls of Object.values(CLASS_BY_ID)) {
+    assert.equal(cls.skills.length, 8, cls.id);
+    assert.equal(skillUnlockLevel(cls.skills[0]), 1);
+    const levels = cls.skills.map(skillUnlockLevel);
+    assert.deepEqual(levels, [...levels].sort((a, b) => a - b), cls.id);
+    assert.equal(skillUnlockLevel(cls.ultimate), 15);
+  }
+});
+
+test('barra de habilidades: aceita 4 diferentes, recusa repetidas ou fora da lista', () => {
+  const cls = CLASS_BY_ID.mage;
+  assert.deepEqual(validLoadout(cls, [4, 5, 6, 7]), [4, 5, 6, 7]);
+  assert.deepEqual(validLoadout(cls, [0, 0, 1, 2]), [0, 1, 2, 3]);
+  assert.deepEqual(validLoadout(cls, [0, 1, 2, 99]), [0, 1, 2, 3]);
+  assert.equal(barSkills(cls, [7, 6, 5, 4])[0].id, cls.skills[7].id);
+  assert.equal(barSkills(cls)[4].id, cls.ultimate.id);
 });

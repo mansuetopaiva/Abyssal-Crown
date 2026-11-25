@@ -29,7 +29,8 @@ export function rollRank(rng: Rng, floor: number, bonus: LootBonus, minRank: Ran
 const newId = () =>
   (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`).replace(/-/g, '').slice(0, 16);
 
-const tierName = (names: string[], ilvl: number) => names[ilvl < 15 ? 0 : ilvl < 40 ? 1 : 2];
+/** Nome-base pela faixa de nível do item (5 faixas). */
+const tierName = (names: string[], ilvl: number) => names[Math.min(names.length - 1, ilvl < 8 ? 0 : ilvl < 20 ? 1 : ilvl < 40 ? 2 : ilvl < 70 ? 3 : 4)];
 
 function rollAffixes(rng: Rng, count: number, ilvl: number, rankIdx: number, exclude: StatKey[] = []): Affix[] {
   const pool = AFFIXES.filter((a) => !exclude.includes(a.stat));
@@ -80,6 +81,7 @@ export function rollItem(rng: Rng, opts: RollItemOpts): Item {
     if ('hp' in base && base.hp) item.hp = Math.round(base.hp * s);
     if ('mana' in base && base.mana) item.mana = Math.round(base.mana * s);
     if ('moveSpd' in base && base.moveSpd) item.moveSpd = base.moveSpd;
+    if ('thorns' in base && base.thorns) item.thorns = Math.round((base.thorns as number) * mult);
   }
 
   item.affixes = rollAffixes(rng, randInt(rng, info.affixes[0], info.affixes[1]), ilvl, rankIdx);

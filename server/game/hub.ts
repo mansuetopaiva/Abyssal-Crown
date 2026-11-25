@@ -5,6 +5,7 @@ import {
   potionPrice, refineChance, refineCost, repairCost, smithStock, unsocketCost,
 } from '../../shared/economy';
 import { rollItem } from '../../shared/loot';
+import { skillUnlockLevel, validLoadout } from '../../shared/stats';
 import type { Repo } from '../db';
 import {
   ACHIEVEMENTS, DAILIES, checkAchievements, ensureDaily, migrateData, talentPointsSpent, talentPointsTotal, today,
@@ -200,6 +201,14 @@ export class Hub implements HubApi {
       case 'sell': return this.sell(p, num(m.idx));
       case 'sellBulk': return this.sellBulk(p, num(m.max));
       case 'talent': return this.talent(p, str(m.id, 20));
+      case 'loadout': {
+        const cls = p.cls;
+        const lo = validLoadout(cls, m.slots);
+        if (lo !== m.slots || lo.some((i) => p.char.level < skillUnlockLevel(cls.skills[i]))) return p.toast('Barra inválida: escolha 4 habilidades diferentes já liberadas.', 'error');
+        if (p.world?.kind === 'dungeon' && Object.values(p.cds).some((c) => c > p.world!.time)) return p.toast('Espere as recargas terminarem para trocar a barra.', 'error');
+        p.char.data.loadout = [...lo];
+        return this.reply(p, { ok: true, msg: 'Barra de habilidades atualizada.' }, false);
+      }
       case 'shop': return this.shop(p, m);
       case 'market': return this.market(p, m);
       case 'daily': return this.claimDaily(p, str(m.id, 20));
