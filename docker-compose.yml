@@ -1,0 +1,19 @@
+services:
+  game:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      # Gere com: openssl rand -hex 32   (obrigatório em produção)
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET no arquivo .env}
+      DATABASE_FILE: /data/abyssal.db
+      # TRUST_PROXY: "1"            # atrás de um proxy reverso (Nginx, Railway, Render)
+      # ALLOWED_ORIGINS: https://seu-cliente.vercel.app
+      # CROSS_SITE_COOKIES: "1"     # só se o cliente estiver em outro domínio
+    volumes:
+      - abyssal-data:/data
+    restart: unless-stopped
+
+volumes:
+  abyssal-data:

@@ -180,9 +180,10 @@ export function createHttpHandler(repo: Repo, cfg: HttpConfig, hooks: { onCharac
     }
 
     if (path === '/api/me' && method === 'GET') {
-      const uid = requireUser(req);
-      const u = repo.getUser(uid)!;
-      return send(res, 200, { user: { id: u.id, username: u.username } });
+      // 200 com user=null quando deslogado (evita erro 401 no console a cada visita)
+      const uid = userFromRequest(req, cfg.secret);
+      const u = uid ? repo.getUser(uid) : undefined;
+      return send(res, 200, { user: u ? { id: u.id, username: u.username } : null });
     }
 
     if (path === '/api/characters' && method === 'GET') {

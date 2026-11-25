@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0d0b12" />
+  <meta name="description" content="Abyssal Crown — dungeon crawler multiplayer em pixel art dark fantasy." />
+  <title>Abyssal Crown</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23c9a24a' d='M1 12 2 4l3 4 3-6 3 6 3-4 1 8z'/%3E%3C/svg%3E" />
+  <script src="/config.js"></script>
+</head>
+<body>
+  <!-- Tela de autenticação -->
+  <main id="screen-auth" class="screen" hidden>
+    <div class="title-block">
+      <h1 class="logo">Abyssal <span>Crown</span></h1>
+      <p class="tagline">Desça. Sobreviva. Reivindique a coroa.</p>
+    </div>
+    <section class="card auth-card" aria-labelledby="auth-heading">
+      <h2 id="auth-heading" class="sr-only">Acesso</h2>
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-login" aria-selected="true" aria-controls="form-login">Entrar</button>
+        <button role="tab" id="tab-register" aria-selected="false" aria-controls="form-register">Criar conta</button>
+      </div>
+      <form id="form-login" role="tabpanel" aria-labelledby="tab-login" novalidate>
+        <label for="login-user">Usuário ou e-mail</label>
+        <input id="login-user" name="login" autocomplete="username" required maxlength="254" />
+        <label for="login-pass">Senha</label>
+        <input id="login-pass" name="password" type="password" autocomplete="current-password" required maxlength="128" />
+        <p class="form-error" role="alert" aria-live="polite"></p>
+        <button class="btn primary" type="submit">Entrar no Abismo</button>
+      </form>
+      <form id="form-register" role="tabpanel" aria-labelledby="tab-register" hidden novalidate>
+        <label for="reg-user">Nome de usuário</label>
+        <input id="reg-user" name="username" autocomplete="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" />
+        <small class="hint">3 a 20 caracteres: letras, números ou _</small>
+        <label for="reg-email">E-mail</label>
+        <input id="reg-email" name="email" type="email" autocomplete="email" required maxlength="254" />
+        <label for="reg-pass">Senha</label>
+        <input id="reg-pass" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128" />
+        <small class="hint">Mínimo 8 caracteres, com letras e números</small>
+        <label for="reg-pass2">Confirmar senha</label>
+        <input id="reg-pass2" name="password2" type="password" autocomplete="new-password" required />
+        <p class="form-error" role="alert" aria-live="polite"></p>
+        <button class="btn primary" type="submit">Forjar conta</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- Seleção de personagem -->
+  <main id="screen-chars" class="screen" hidden>
+    <header class="chars-header">
+      <h1 class="logo small">Abyssal <span>Crown</span></h1>
+      <div class="row"><span id="chars-user" class="muted"></span><button id="btn-logout" class="btn ghost">Sair</button></div>
+    </header>
+    <section aria-labelledby="chars-heading">
+      <h2 id="chars-heading">Seus heróis <small class="muted">(até 3)</small></h2>
+      <ul id="char-list" class="char-list" role="list"></ul>
+    </section>
+    <section id="char-create" class="card" aria-labelledby="create-heading" hidden>
+      <h2 id="create-heading">Novo herói</h2>
+      <form id="form-create" novalidate>
+        <label for="create-name">Nome</label>
+        <input id="create-name" required minlength="3" maxlength="16" autocomplete="off" />
+        <fieldset>
+          <legend>Classe</legend>
+          <div id="class-grid" class="class-grid"></div>
+        </fieldset>
+        <p class="form-error" role="alert" aria-live="polite"></p>
+        <div class="row"><button class="btn primary" type="submit">Criar</button><button class="btn ghost" type="button" id="btn-cancel-create">Cancelar</button></div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Jogo -->
+  <div id="screen-game" class="screen game" hidden>
+    <canvas id="game-canvas" aria-label="Área de jogo"></canvas>
+    <div id="hud" class="hud">
+      <div class="hud-top-left">
+        <div class="portrait"><span id="hud-name"></span> <span id="hud-level" class="lvl"></span></div>
+        <div class="bar hp" role="meter" aria-label="Vida"><i></i><span></span></div>
+        <div class="bar mp" role="meter" aria-label="Mana"><i></i><span></span></div>
+        <div class="bar xp" role="meter" aria-label="Experiência"><i></i><span></span></div>
+        <div class="wallet"><span class="gold" title="Gold">◉ <b id="hud-gold">0</b></span><span class="gems" title="Gemas">◆ <b id="hud-gems">0</b></span></div>
+        <div id="party-panel" class="party" aria-label="Grupo"></div>
+      </div>
+      <div class="hud-top-right">
+        <div class="floor-label"><span id="hud-floor">Cidade</span><small id="hud-biome"></small></div>
+        <canvas id="minimap" width="160" height="160" aria-label="Minimapa"></canvas>
+        <div class="fps" id="hud-fps"></div>
+      </div>
+      <div id="boss-bar" class="boss-bar" hidden><div class="boss-name"></div><div class="bar boss"><i></i></div></div>
+      <div class="hud-bottom">
+        <div id="skillbar" class="skillbar" role="toolbar" aria-label="Habilidades"></div>
+        <div class="potions">
+          <button class="potion hp" id="btn-hp" title="Poção de vida (Q)">Q<b id="pot-hp">0</b></button>
+          <button class="potion mp" id="btn-mp" title="Poção de mana (F)">F<b id="pot-mp">0</b></button>
+        </div>
+      </div>
+      <nav class="menu-buttons" aria-label="Menus">
+        <button data-panel="inventory" title="Inventário (I)">Inventário</button>
+        <button data-panel="character" title="Personagem e talentos (C)">Talentos</button>
+        <button data-panel="quests" title="Missões e conquistas (J)">Missões</button>
+        <button data-panel="leaderboard" title="Ranking (L)">Ranking</button>
+        <button id="btn-town" title="Voltar à cidade (T)">Cidade</button>
+      </nav>
+      <div id="interact-hint" class="interact-hint" hidden></div>
+      <div id="center-msg" class="center-msg" aria-live="polite"></div>
+      <div id="toasts" class="toasts" aria-live="polite"></div>
+      <section id="chat" class="chat" aria-label="Chat global">
+        <ol id="chat-log" class="chat-log"></ol>
+        <form id="chat-form"><input id="chat-input" maxlength="200" placeholder="Enter para conversar · /convidar nome" autocomplete="off" aria-label="Mensagem" /></form>
+      </section>
+      <div id="touch" class="touch" hidden>
+        <div id="stick" class="stick"><i></i></div>
+        <div class="touch-buttons">
+          <button id="t-attack" class="t-attack" aria-label="Atacar">⚔</button>
+          <button id="t-use" aria-label="Interagir">E</button>
+        </div>
+      </div>
+    </div>
+    <div id="panel" class="panel" role="dialog" aria-modal="false" hidden>
+      <header><h2 id="panel-title"></h2><button id="panel-close" class="btn ghost" aria-label="Fechar">✕</button></header>
+      <div id="panel-body" class="panel-body"></div>
+    </div>
+    <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+    <div id="loading" class="loading" hidden><div class="spinner"></div><p>Abrindo portal...</p></div>
+  </div>
+  <noscript>Abyssal Crown precisa de JavaScript.</noscript>
+  <script src="/dist/game.js" defer></script>
+</body>
+</html>

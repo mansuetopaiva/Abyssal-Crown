@@ -5,6 +5,7 @@ declare module 'ws' {
   import type { Duplex } from 'node:stream';
 
   class WebSocket extends EventEmitter {
+    constructor(url: string, opts?: { headers?: Record<string, string> });
     static readonly OPEN: number;
     readyState: number;
     bufferedAmount: number;

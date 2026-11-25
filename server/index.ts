@@ -64,7 +64,7 @@ export function startServer(opts: StartOptions = {}) {
   return { server, hub, repo, ready, close };
 }
 
-const isMain = process.argv[1] && resolve(process.argv[1]).replace(/\.ts$/, '') === resolve(fileURLToPath(import.meta.url)).replace(/\.(ts|js)$/, '');
+const isMain = process.argv[1] && resolve(process.argv[1]).replace(/\.(ts|js)$/, '') === resolve(fileURLToPath(import.meta.url)).replace(/\.(ts|js)$/, '');
 if (isMain || process.env.ABYSSAL_MAIN === '1') {
   const s = startServer();
   const shutdown = () => { console.log('Salvando e encerrando...'); void s.close().then(() => process.exit(0)); };
