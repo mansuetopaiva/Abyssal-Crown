@@ -48,6 +48,7 @@ export interface CharacterData {
   phoenixUsed?: boolean;
   shop?: { date: string; bought: number[] };
   loadout?: number[]; // índices das 4 habilidades na barra
+  merchant?: { period: number; reroll: number; bought: number[] };
 }
 
 export interface Character {

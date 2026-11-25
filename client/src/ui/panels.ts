@@ -11,7 +11,7 @@ import type { Game } from '../game';
 const SLOT_TYPE_LABEL: Record<string, string> = { weapon: 'Arma', offhand: 'Secundária', helm: 'Elmo', armor: 'Armadura', gloves: 'Luvas', boots: 'Botas', amulet: 'Amuleto', ring: 'Anel' };
 const TITLES: Record<string, string> = {
   inventory: 'Inventário', character: 'Personagem e Talentos', quests: 'Missões e Conquistas', leaderboard: 'Quadro de Honra',
-  smith: 'Ferreiro Brann', alchemist: 'Alquimista Ysolde', jeweler: 'Joalheira Mirel', market: 'Mercado', portal: 'Portal do Abismo',
+  smith: 'Ferreiro Brann', alchemist: 'Alquimista Ysolde', jeweler: 'Joalheira Mirel', market: 'Mercado', portal: 'Portal do Abismo', stash: 'Baú Pessoal',
 };
 const ACH = [
   ['floor10', 'Desbravador', 'Alcance o andar 10', 10], ['floor25', 'Mergulhador', 'Alcance o andar 25', 20], ['floor50', 'Abissal', 'Alcance o andar 50', 40],
@@ -86,6 +86,8 @@ export class Panels {
   stock: any[] = [];
   listings: any[] = [];
   board: any = null;
+  merchant: { items: any[]; rerollCost: number; nextIn: number } | null = null;
+  stash: { items: { i: number; item: Item }[]; slots: number } | null = null;
 
   constructor(private g: Game) {
     $('#panel-close').onclick = () => this.close();
@@ -102,7 +104,8 @@ export class Panels {
     $('#panel').hidden = false;
     $('#panel-title').textContent = TITLES[name] ?? name;
     if (name === 'smith') this.g.send({ t: 'shop', op: 'stock' });
-    if (name === 'market') this.g.send({ t: 'market', op: 'list' });
+    if (name === 'market') { this.g.send({ t: 'market', op: 'list' }); this.g.send({ t: 'shop', op: 'mstock' }); }
+    if (name === 'stash') this.g.send({ t: 'stash', op: 'open' });
     if (name === 'leaderboard') api('/api/leaderboard').then((b) => { this.board = b; this.refresh(); }).catch(() => {});
     this.refresh();
     ($('#panel-close') as HTMLButtonElement).focus();
@@ -117,6 +120,8 @@ export class Panels {
   onServer(m: any) {
     if (m.t === 'stock') this.stock = m.items;
     if (m.t === 'market') this.listings = m.listings;
+    if (m.t === 'mstock') this.merchant = m;
+    if (m.t === 'stash') this.stash = m;
     if (m.t === 'chestOpened') this.g.toast(`Baú: ${m.item.name} [${m.item.rank}]`, 'good');
     this.refresh();
   }
@@ -167,6 +172,7 @@ export class Panels {
   private selectedItem(): Item | null {
     if (!this.selected) return null;
     const [k, v] = this.selected.split(':');
+    if (k === 'st') return this.stash?.items.find((e) => e.i === Number(v))?.item ?? null;
     return k === 'inv' ? this.c.data.inventory[Number(v)] : this.c.data.equipment[v];
   }
 
@@ -203,6 +209,13 @@ export class Panels {
         class: 'btn small', disabled: !inTown, title: inTown ? '' : 'Venda na cidade',
         onclick: () => { if (RANKS.indexOf(sel.rank) >= 5 && !confirm(`Vender ${sel.name} [${sel.rank}]?`)) return; this.g.send({ t: 'sell', idx }); this.selected = null; },
       }, `Vender (${fmt(Math.floor(sel.value * (1 + sel.refine * 0.15)))} gold)`));
+      actions.append(h('button', {
+        class: 'btn small',
+        onclick: () => {
+          if (inTown && !confirm(`Descartar ${sel.name} [${sel.rank}] para sempre?`)) return;
+          this.g.send({ t: 'drop', idx }); this.selected = null;
+        },
+      }, inTown ? 'Descartar' : 'Largar no chão'));
     } else if (sel) {
       actions.append(h('button', { class: 'btn small', onclick: () => { this.g.send({ t: 'unequip', slot: this.selected!.split(':')[1] }); this.selected = null; } }, 'Desequipar'));
     }
@@ -277,6 +290,28 @@ export class Panels {
       form.append(sel);
     });
     return form;
+  }
+
+  // ---------- baú pessoal ----------
+  render_stash() {
+    const st = this.stash;
+    if (!st) return [h('p', { class: 'muted', text: 'Abrindo o baú...' })];
+    const grid = h('div', { class: 'inv-grid' });
+    for (let k = 0; k < st.slots; k++) {
+      const e = st.items[k];
+      grid.append(this.slotEl(e?.item ?? null, `st:${e?.i ?? -1}:${k}`, '', { compare: true, ondbl: e ? () => this.g.send({ t: 'stash', op: 'take', idx: e.i }) : undefined }));
+    }
+    const sel = this.selected;
+    const actions = h('div', { class: 'inv-actions' });
+    if (sel?.startsWith('inv:')) actions.append(h('button', { class: 'btn small gold', onclick: () => { this.g.send({ t: 'stash', op: 'put', idx: Number(sel.split(':')[1]) }); this.selected = null; } }, 'Guardar no baú'));
+    if (sel?.startsWith('st:') && Number(sel.split(':')[1]) >= 0) actions.append(h('button', { class: 'btn small gold', onclick: () => { this.g.send({ t: 'stash', op: 'take', idx: Number(sel.split(':')[1]) }); this.selected = null; } }, 'Pegar do baú'));
+    return [
+      h('p', { class: 'muted', text: 'O baú é da sua conta: todos os seus heróis veem os mesmos itens. Duplo clique para mover.' }),
+      h('div', { class: 'inv-layout' },
+        h('div', null, h('h3', { text: 'Inventário' }), this.invGrid({ compare: true, dbl: (i) => this.g.send({ t: 'stash', op: 'put', idx: i }) })),
+        h('div', null, h('h3', { text: `Baú (${st.items.length}/${st.slots})` }), grid)),
+      actions,
+    ];
   }
 
   // ---------- missões ----------
@@ -401,8 +436,22 @@ export class Panels {
 
   // ---------- mercado ----------
   render_market() {
-    const tabs = this.subtabs([['merchant', 'Vender ao mercador'], ['browse', 'Comprar de jogadores'], ['sell', 'Anunciar para jogadores'], ['gems', 'Loja de Gemas']], 'merchant');
+    const tabs = this.subtabs([['weapons', 'Armas à venda'], ['merchant', 'Vender ao mercador'], ['browse', 'Comprar de jogadores'], ['sell', 'Anunciar para jogadores'], ['gems', 'Loja de Gemas']], 'weapons');
     const c = this.c;
+    if (this.sub === 'weapons') {
+      const mer = this.merchant;
+      if (!mer) return [tabs, h('p', { class: 'muted', text: 'Carregando estoque...' })];
+      const mins = Math.max(1, Math.ceil(mer.nextIn / 60000));
+      return [tabs,
+        h('div', { class: 'row', style: { justifyContent: 'space-between', marginBottom: '8px' } },
+          h('span', { class: 'muted', text: `Armas para o seu nível. Novo estoque em ${mins} min.` }),
+          h('button', { class: 'btn small', disabled: c.gold < mer.rerollCost, onclick: () => this.g.send({ t: 'shop', op: 'mreroll' }) }, `Renovar agora (◉ ${fmt(mer.rerollCost)})`)),
+        h('ul', { class: 'list' }, ...mer.items.map((s, i) => h('li', null,
+          this.slotEl(s.item, `mw:${i}`, '', { compare: true }),
+          h('div', { class: 'grow' }, itemName(s.item), h('div', { class: 'muted', text: statLines(s.item).join(' · ') })),
+          h('span', { class: 'price', text: `◉ ${fmt(s.price)}` }),
+          h('button', { class: 'btn small gold', disabled: s.sold || c.gold < s.price, onclick: () => this.g.send({ t: 'shop', op: 'mbuy', i }) }, s.sold ? 'Vendida' : 'Comprar'))))];
+    }
     if (this.sub === 'merchant') {
       const sel = this.selectedItem();
       const inv = (c.data.inventory as (Item | null)[]).filter(Boolean) as Item[];

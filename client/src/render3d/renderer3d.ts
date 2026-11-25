@@ -11,7 +11,7 @@ import {
   type Ent, type MapState,
 } from './common';
 import {
-  animateProcedural, attach, CLASS_MODEL, getLoaded, KAY, load, makeCharacter, makeProcedural, mat, OFFHAND_MODEL, play, TWO_HANDED, WEAPON_MODEL,
+  animateProcedural, applyOutfit, attach, CLASS_LOOK, CLASS_MODEL, getLoaded, KAY, load, makeCharacter, makeProcedural, mat, OFFHAND_MODEL, outfitFor, play, TWO_HANDED, WEAPON_MODEL,
   type CharView, type ProcView,
 } from './models';
 
@@ -156,7 +156,7 @@ export class Renderer3D {
     const town = m.world === 'town';
     const names = ['floor_tile_large', 'floor_tile_large_rocks', 'wall', 'wall_cracked', 'torch_mounted', 'barrel_small', 'barrel_large', 'crates_stacked', 'box_stacked',
       'banner_patternA_red', 'banner_thin_blue', 'candle_triple', 'rubble_half', ...(town
-        ? ['floor_dirt_large', 'table_medium_decorated_A', 'keg_decorated', 'banner_shield_yellow', 'sword_shield', 'shelf_small_candles', 'trunk_large_A', 'bottle_A_green']
+        ? ['floor_dirt_large', 'chest', 'table_medium_decorated_A', 'keg_decorated', 'banner_shield_yellow', 'sword_shield', 'shelf_small_candles', 'trunk_large_A', 'bottle_A_green']
         : ['chest', 'chest_gold', 'stairs', 'floor_tile_big_spikes', 'rubble_large', 'pillar', 'pillar_decorated', 'column', 'floor_dirt_large'])];
     const g: Record<string, any> = {};
     await Promise.all(names.map((n) => load(n).then((x) => (g[n] = x)).catch(() => null)));
@@ -414,6 +414,12 @@ export class Renderer3D {
         this.portal = grp;
         continue;
       }
+      if (n.role === 'stash') {
+        if (g.chest) { const o = g.chest.scene.clone(); o.scale.setScalar(KAY * 1.6); o.position.set(x, 0, z); o.rotation.y = Math.PI; o.traverse((k: any) => k.isMesh && (k.castShadow = true)); this.staticGroup.add(o); }
+        if (g.candle_triple) { const o = g.candle_triple.scene.clone(); o.scale.setScalar(KAY); o.position.set(x + 0.7, 0, z - 0.2); this.staticGroup.add(o); }
+        this.npcViews.push({ name: n.name, root: new THREE.Group(), x, z });
+        continue;
+      }
       if (n.role === 'board') {
         for (const [name, dx] of [['table_medium_decorated_A', 0], ['banner_shield_yellow', 0]] as const) {
           if (!g[name]) continue;
@@ -458,7 +464,7 @@ export class Renderer3D {
   // ---------------- entidades ----------------
   private viewKey(e: Ent): string {
     switch (e.kind) {
-      case K_PLAYER: return `p:${CLASS_MODEL[e.meta.c]?.model ?? 'Knight'}:${CLASS_MODEL[e.meta.c]?.tint ?? ''}`;
+      case K_PLAYER: return `p:${CLASS_LOOK[e.meta.c]?.base ?? 'Knight'}`;
       case K_MINION: return 'minion';
       case K_MONSTER: case K_BOSS: return `m:${e.meta.d}:${e.kind}:${e.meta.r ?? 6}`;
       case K_PROJ: return `j:${e.meta.s}:${e.meta.h ? 'h' : e.meta.e}`;
@@ -504,8 +510,8 @@ export class Renderer3D {
     };
     switch (e.kind) {
       case K_PLAYER: {
-        const cm = CLASS_MODEL[e.meta.c] ?? CLASS_MODEL.warrior;
-        asChar(cm.model, { tint: cm.tint });
+        // a aparência final (roupa, elmo, capa) é montada em updateView a partir do equipamento
+        asChar(CLASS_LOOK[e.meta.c]?.base ?? 'Knight', {});
         break;
       }
       case K_MINION: asChar('Skeleton_Minion', { tint: '#b8e6a0', weapon: 'sword_1handed' }); break;
@@ -853,6 +859,7 @@ export class Renderer3D {
     if (v.char) {
       const c = v.char;
       if (e.kind === K_PLAYER) {
+        void applyOutfit(c, outfitFor(e.meta.c, e.meta));
         const wr = e.meta.wr ?? 0;
         const rc = RANK_INFO[RANKS[wr] ?? 'F'].color;
         attach(c, 'r', WEAPON_MODEL[e.meta.w] ?? '', wr >= 5 ? (rc === 'rainbow' ? '#ffd23f' : rc) : '');

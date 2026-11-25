@@ -64,6 +64,10 @@ export class Repo {
         created_at INTEGER NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_tx_char ON transactions(char_id, created_at);
+      CREATE TABLE IF NOT EXISTS stash (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        data TEXT NOT NULL
+      );
     `);
   }
 
@@ -168,6 +172,17 @@ export class Repo {
   /** Credita gold a um personagem offline (venda no mercado). */
   addGold(charId: number, amount: number) {
     this.db.prepare('UPDATE characters SET gold = gold + ? WHERE id = ?').run(amount, charId);
+  }
+
+  // ---------- baú pessoal (por conta, compartilhado entre personagens) ----------
+  getStash(userId: number, slots: number): (Item | null)[] {
+    const r = this.db.prepare('SELECT data FROM stash WHERE user_id = ?').get(userId) as { data: string } | undefined;
+    const items = r ? (JSON.parse(r.data) as (Item | null)[]) : [];
+    while (items.length < slots) items.push(null);
+    return items;
+  }
+  saveStash(userId: number, items: (Item | null)[]) {
+    this.db.prepare('INSERT INTO stash (user_id, data) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data').run(userId, JSON.stringify(items));
   }
 
   // ---------- log de transações ----------

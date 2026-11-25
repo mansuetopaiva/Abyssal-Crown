@@ -22,7 +22,9 @@ function starter(slotType: Item['slotType'], baseType: string): Item {
 
 export function newCharacterData(classId: string): CharacterData {
   const cls = CLASS_BY_ID[classId];
-  const equipment: CharacterData['equipment'] = { weapon: starter('weapon', cls.startWeapon), armor: starter('armor', 'armor') };
+  // roupa inicial combina com a classe: placas (guerreiro/clérigo), couro (arqueiro/ladino), manto (mago/necromante)
+  const armorType = ['mage', 'necro'].includes(classId) ? 'robe' : ['archer', 'rogue'].includes(classId) ? 'leather' : 'armor';
+  const equipment: CharacterData['equipment'] = { weapon: starter('weapon', cls.startWeapon), armor: starter('armor', armorType) };
   if (cls.startOffhand) equipment.offhand = starter('offhand', cls.startOffhand);
   return {
     inventory: Array(BASE_INV_SLOTS).fill(null),

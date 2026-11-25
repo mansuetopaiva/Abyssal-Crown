@@ -1,7 +1,8 @@
 import type { WebSocket } from 'ws';
 import { CHECKPOINT_EVERY, INV_EXPANSION_SLOTS, MARKET_TAX, MAX_INV_SLOTS, RANKS, TICK_MS, TICK_RATE, TILE, type Slot } from '../../shared/constants';
 import {
-  GEM_SHOP, MARKET_MAX_LISTINGS, MARKET_MAX_PRICE, MAX_GEM_TIER, POTION_HEAL, canRefine, combineCost, gemKey, gemPrice, isGemId,
+  GEM_SHOP, MARKET_MAX_LISTINGS, MARKET_MAX_PRICE, MAX_GEM_TIER, POTION_HEAL, STASH_SLOTS, canRefine, combineCost, gemKey, gemPrice, isGemId,
+  merchantPeriod, merchantRerollCost, merchantStock,
   potionPrice, refineChance, refineCost, repairCost, smithStock, unsocketCost,
 } from '../../shared/economy';
 import { rollItem } from '../../shared/loot';
@@ -200,6 +201,8 @@ export class Hub implements HubApi {
       case 'sort': sortInventory(p.char); return this.reply(p, { ok: true }, false);
       case 'sell': return this.sell(p, num(m.idx));
       case 'sellBulk': return this.sellBulk(p, num(m.max));
+      case 'drop': return this.drop(p, num(m.idx));
+      case 'stash': return this.stashOp(p, str(m.op, 10), num(m.idx));
       case 'talent': return this.talent(p, str(m.id, 20));
       case 'loadout': {
         const cls = p.cls;
@@ -229,7 +232,7 @@ export class Hub implements HubApi {
     if (recompute) {
       p.recompute();
       // a arma pode ter mudado: reenvia os dados visuais deste jogador aos outros
-      if (p.world) for (const o of p.world.players) if (o !== p) o.known.delete(p.eid);
+      if (p.world) for (const o of p.world.players) o.known.delete(p.eid);
     }
     p.dirty = true;
     p.sendChar();
@@ -351,6 +354,48 @@ export class Hub implements HubApi {
     this.reply(p, { ok: true, msg: `Vendido por ${price} gold.` }, false);
   }
 
+  /** Larga um item: na dungeon ele fica no chão (dá para pegar de volta); na cidade é descartado. */
+  private drop(p: Player, idx: number) {
+    const c = p.char;
+    if (!validIndex(c, idx) || !c.data.inventory[idx]) return;
+    const it = c.data.inventory[idx]!;
+    c.data.inventory[idx] = null;
+    if (p.world instanceof Dungeon) {
+      p.world.dropItem(p, it);
+      this.repo.logTx(c.id, 'drop', 0, 0, `${it.name} [${it.rank}] no andar ${p.world.floor}`);
+      this.reply(p, { ok: true, msg: `${it.name} largado no chão. Afaste-se e volte para pegar de novo.` }, false);
+    } else {
+      this.repo.logTx(c.id, 'discard', 0, 0, `${it.name} [${it.rank}]`);
+      this.reply(p, { ok: true, msg: `${it.name} descartado.` }, false);
+    }
+  }
+
+  /** Baú pessoal da conta (na cidade, junto ao baú). */
+  private stashOp(p: Player, op: string, idx: number) {
+    if (p.world !== this.town || !this.town.nearNpc(p, 'stash', 5)) return p.toast('Vá até o Baú Pessoal na cidade.', 'error');
+    p.stash ??= this.repo.getStash(p.userId, STASH_SLOTS);
+    const c = p.char, st = p.stash;
+    if (op === 'put') {
+      if (!validIndex(c, idx) || !c.data.inventory[idx]) return;
+      const free = st.indexOf(null);
+      if (free < 0) return p.toast('Baú cheio.', 'error');
+      st[free] = c.data.inventory[idx];
+      c.data.inventory[idx] = null;
+    } else if (op === 'take') {
+      if (!Number.isInteger(idx) || idx < 0 || idx >= st.length || !st[idx]) return;
+      if (!addToInventory(c, st[idx]!)) return p.toast('Inventário cheio.', 'error');
+      st[idx] = null;
+    } else if (op !== 'open') return;
+    if (op !== 'open') {
+      // baú e personagem salvos juntos (nada se perde nem se duplica)
+      this.repo.tx(() => { this.repo.saveStash(p.userId, st); this.repo.saveCharacter(c); });
+      p.dirty = false;
+      p.sendChar();
+    }
+    const order = st.map((it, i) => ({ it, i })).filter((x) => x.it).sort((a, b) => RANKS.indexOf(b.it!.rank) - RANKS.indexOf(a.it!.rank));
+    p.send({ t: 'stash', items: order.map((x) => ({ i: x.i, item: x.it })), slots: STASH_SLOTS });
+  }
+
   /** Vende ao mercador todos os itens do inventário até o rank indicado (0=F … 4=B). */
   private sellBulk(p: Player, maxRank: number) {
     if (p.world !== this.town) return p.toast('Venda itens na cidade.', 'error');
@@ -453,6 +498,32 @@ export class Hub implements HubApi {
         if (!pay(cost, 0, 'repair', `${items.length} itens`)) return;
         for (const it of items) it!.durability = 100;
         return this.reply(p, { ok: true, msg: `Reparado por ${cost} gold.` }, true);
+      }
+      // ----- Mercador de armas (Mercado) -----
+      case 'mstock': case 'mbuy': case 'mreroll': {
+        const period = merchantPeriod();
+        if (c.data.merchant?.period !== period) c.data.merchant = { period, reroll: 0, bought: [] };
+        const mer = c.data.merchant;
+        if (op === 'mreroll') {
+          if (!need('market')) return;
+          if (!pay(merchantRerollCost(c.level), 0, 'merchant_reroll', `renovação ${mer.reroll + 1}`)) return;
+          mer.reroll++; mer.bought = [];
+          p.dirty = true; p.sendChar();
+        }
+        const stock = merchantStock(c.id, period, mer.reroll, c.maxFloor || c.level);
+        if (op === 'mbuy') {
+          if (!need('market')) return;
+          const i = num(m.i);
+          if (!Number.isInteger(i) || !stock[i]) return;
+          if (mer.bought.includes(i)) return p.toast('Essa arma já foi vendida.', 'error');
+          if (freeSlot(c) < 0) return p.toast('Inventário cheio.', 'error');
+          if (!pay(stock[i].price, 0, 'merchant_buy', `${stock[i].item.name} [${stock[i].item.rank}]`)) return;
+          addToInventory(c, { ...stock[i].item, id: `${c.id}m${Date.now().toString(36)}${i}` });
+          mer.bought.push(i);
+          this.reply(p, { ok: true, msg: `Comprou ${stock[i].item.name}.` }, false);
+        }
+        const nextIn = (period + 1) * 3600_000 - Date.now();
+        return p.send({ t: 'mstock', items: stock.map((s, i) => ({ ...s, sold: mer.bought.includes(i) })), rerollCost: merchantRerollCost(c.level), nextIn });
       }
       // ----- Alquimista -----
       case 'potion': {

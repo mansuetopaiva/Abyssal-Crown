@@ -113,7 +113,7 @@ export class Game {
         if (m.gems) this.r.text(this.px, this.py - 20, `+${m.gems} gemas`, '#7fe3ff', 1);
         break;
       }
-      case 'stock': case 'market': case 'refined': case 'chestOpened': this.panels.onServer(m); break;
+      case 'stock': case 'market': case 'mstock': case 'stash': case 'refined': case 'chestOpened': this.panels.onServer(m); break;
     }
   }
 

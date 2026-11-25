@@ -16,6 +16,12 @@ export interface HubApi {
 }
 
 export type FxEvent = (string | number)[];
+
+/** Dados visuais da roupa (armadura e elmo) para o cliente montar a aparência do herói. */
+function outfitMeta(o: Player) {
+  const a = o.char.data.equipment.armor, h = o.char.data.equipment.helm;
+  return { a: a?.baseType, ar: a ? RANKS.indexOf(a.rank) : -1, h: h?.baseType, hr: h ? RANKS.indexOf(h.rank) : -1 };
+}
 export const INTEREST = 440;
 
 export abstract class World {
@@ -104,7 +110,7 @@ export abstract class World {
         if (o !== p && dx * dx + dy * dy > r2) continue;
         seen.add(o.eid);
         const row: unknown[] = [o.eid, K_PLAYER, Math.round(o.x * 10), Math.round(o.y * 10), Math.round((o.hp / o.stats.maxHp) * 100), this.playerFlags(o)];
-        if (!p.known.has(o.eid)) { const w = o.char.data.equipment.weapon; row.push({ n: o.name, c: o.char.classId, l: o.char.level, cos: o.char.data.cosmetic, w: w?.baseType, wr: w ? RANKS.indexOf(w.rank) : 0, o: o.char.data.equipment.offhand?.baseType }); }
+        if (!p.known.has(o.eid)) { const w = o.char.data.equipment.weapon; row.push({ n: o.name, c: o.char.classId, l: o.char.level, cos: o.char.data.cosmetic, w: w?.baseType, wr: w ? RANKS.indexOf(w.rank) : 0, o: o.char.data.equipment.offhand?.baseType, ...outfitMeta(o) }); }
         e.push(row);
       }
       this.extraEntities(p, e);

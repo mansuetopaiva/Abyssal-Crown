@@ -43,7 +43,7 @@ function rollAffixes(rng: Rng, count: number, ilvl: number, rankIdx: number, exc
   return out;
 }
 
-export interface RollItemOpts { ilvl: number; rank?: Rank; floor?: number; bonus?: LootBonus; slotType?: ItemSlotType }
+export interface RollItemOpts { ilvl: number; rank?: Rank; floor?: number; bonus?: LootBonus; slotType?: ItemSlotType; baseType?: string }
 
 export function rollItem(rng: Rng, opts: RollItemOpts): Item {
   const ilvl = Math.max(1, opts.ilvl);
@@ -62,7 +62,7 @@ export function rollItem(rng: Rng, opts: RollItemOpts): Item {
   };
 
   if (wantWeapon) {
-    const base = unique?.type ? WEAPONS.find((w) => w.type === unique!.type)! : pick(rng, WEAPONS);
+    const base = unique?.type ? WEAPONS.find((w) => w.type === unique!.type)! : (opts.baseType && WEAPONS.find((w) => w.type === opts.baseType)) || pick(rng, WEAPONS);
     const scale = (1 + ilvl * 0.12) * mult;
     item.baseType = base.type;
     item.slotType = 'weapon';

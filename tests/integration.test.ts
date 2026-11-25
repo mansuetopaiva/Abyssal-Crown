@@ -174,6 +174,38 @@ test('dois jogadores se veem na cidade, conversam e jogam uma dungeon', async ()
   // voltar à cidade e salvar
   A.ws.send(JSON.stringify({ t: 'town' }));
   await A.next('map', (m) => m.world === 'town');
+
+  // baú pessoal: guardar e pegar de volta (persistido no banco)
+  const { rollItem } = await import('../shared/loot');
+  const { mulberry32 } = await import('../shared/rng');
+  const npc = (role: string) => srv.hub.town.town.npcs.find((n) => n.role === role)!;
+  pa.char.data.inventory[0] = rollItem(mulberry32(1), { ilvl: 5, rank: 'C' });
+  pa.x = npc('stash').x * TILE; pa.y = (npc('stash').y + 1) * TILE;
+  A.ws.send(JSON.stringify({ t: 'stash', op: 'put', idx: 0 }));
+  const st = await A.next('stash', (m) => m.items.length === 1);
+  assert.equal(srv.repo.getStash(a.id, 48).filter(Boolean).length, 1, 'baú salvo no banco');
+  assert.equal(pa.char.data.inventory.filter(Boolean).length, 0);
+  A.ws.send(JSON.stringify({ t: 'stash', op: 'take', idx: st.items[0].i }));
+  await A.next('stash', (m) => m.items.length === 0);
+  assert.equal(pa.char.data.inventory.filter(Boolean).length, 1);
+
+  // mercador vende armas por gold
+  pa.x = npc('market').x * TILE; pa.y = (npc('market').y - 1) * TILE;
+  A.ws.send(JSON.stringify({ t: 'shop', op: 'mstock' }));
+  const ms = await A.next('mstock');
+  assert.equal(ms.items.length, 12);
+  assert.ok(ms.items.every((s: any) => s.item.slotType === 'weapon' && s.price > 0));
+  pa.char.gold = 1_000_000;
+  A.ws.send(JSON.stringify({ t: 'shop', op: 'mbuy', i: 0 }));
+  await A.next('mstock', (m) => m.items[0].sold);
+  assert.equal(pa.char.gold, 1_000_000 - ms.items[0].price);
+  assert.ok(pa.char.data.inventory.some((it) => it?.baseType === ms.items[0].item.baseType));
+
+  // largar item na cidade = descartar
+  const before = pa.char.data.inventory.filter(Boolean).length;
+  A.ws.send(JSON.stringify({ t: 'drop', idx: 0 }));
+  await A.next('char');
+  assert.equal(pa.char.data.inventory.filter(Boolean).length, before - 1);
   A.ws.close(); B.ws.close();
   await new Promise((r) => setTimeout(r, 100));
   const saved = srv.repo.getCharacter(a.ch.id)!;

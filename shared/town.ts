@@ -1,7 +1,7 @@
 import { T_FLOOR, T_WALL } from './dungeon';
 import type { Grid } from './movement';
 
-export interface Npc { id: string; name: string; role: 'smith' | 'alchemist' | 'jeweler' | 'market' | 'portal' | 'board'; x: number; y: number }
+export interface Npc { id: string; name: string; role: 'smith' | 'alchemist' | 'jeweler' | 'market' | 'portal' | 'board' | 'stash'; x: number; y: number }
 
 export const TOWN_W = 44;
 export const TOWN_H = 32;
@@ -29,6 +29,7 @@ export function buildTown(): Grid & { npcs: Npc[]; spawn: { x: number; y: number
     { id: 'market', name: 'Mercado', role: 'market', x: 35.5, y: 22.4 },
     { id: 'portal', name: 'Portal do Abismo', role: 'portal', x: 21.5, y: 5.6 },
     { id: 'board', name: 'Quadro de Honra', role: 'board', x: 26.5, y: 12.5 },
+    { id: 'stash', name: 'Baú Pessoal', role: 'stash', x: 15.5, y: 12.5 },
   ];
   return { w, h, tiles, npcs, spawn: { x: 21.5, y: 20 } };
 }

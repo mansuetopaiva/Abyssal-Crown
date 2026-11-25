@@ -41,6 +41,8 @@ export class Player {
   starfallAt = 0;
   lastHitBy = '';
   aim = 0; // último ângulo de ataque (para o cliente virar o personagem)
+  stash: (import('../../shared/types').Item | null)[] | null = null; // baú da conta (carregado ao abrir)
+  fullWarnAt = 0;
 
   constructor(public ws: WebSocket, public char: Character, public userId: number) {
     this.recompute();

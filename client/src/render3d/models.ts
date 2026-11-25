@@ -60,6 +60,7 @@ function tinted(mat: any, tint: string, opacity = 1) {
 export interface CharView {
   root: any; mixer: any; actions: Record<string, any>; current: string; handR: any; handL: any;
   weapon: string; offhand: string; hover: number; flying: boolean;
+  scene: any; bones: Record<string, any>; parts: any[]; outfitKey: string;
 }
 
 /** Instancia um personagem animado (clonando o esqueleto). */
@@ -82,7 +83,9 @@ export function makeCharacter(gltf: any, opts: { tint?: string; opacity?: number
   const mixer = new THREE.AnimationMixer(scene);
   const actions: Record<string, any> = {};
   for (const clip of gltf.animations) actions[clip.name] = mixer.clipAction(clip);
-  return { root, mixer, actions, current: '', handR, handL, weapon: '', offhand: '', hover: 0, flying: false };
+  const bones: Record<string, any> = {};
+  scene.traverse((o: any) => { if (o.isBone) bones[o.name] = o; });
+  return { root, mixer, actions, current: '', handR, handL, weapon: '', offhand: '', hover: 0, flying: false, scene, bones, parts: [], outfitKey: '' };
 }
 
 /** Coloca a arma do equipamento na mão do personagem. */
@@ -291,5 +294,96 @@ export function animateProcedural(v: ProcView, dt: number, moving: boolean, atta
     case 'crab': v.parts.forEach((l: any, i: number) => (i < 2 ? (l.rotation.z = Math.sin(t * 8 + i * Math.PI) * 0.4 + attacking * 0.6) : (l.rotation.x = Math.sin(t * 16 + i) * (moving ? 0.4 : 0.05)))); break;
     case 'treant': b.rotation.z = Math.sin(t * 1.5) * 0.04; v.parts.forEach((a: any, i: number) => (a.rotation.x = Math.sin(t * 3 + i * Math.PI) * (moving ? 0.4 : 0.1) - attacking * 1.2)); break;
     default: v.parts.forEach((a: any, i: number) => (a.rotation.x = Math.sin(t * 6 + i * Math.PI) * (moving ? 0.5 : 0.08) - attacking * 1.4)); break;
+  }
+}
+
+
+// ---------- aparência por equipamento ("paperdoll") ----------
+// Os 5 heróis do KayKit usam o mesmo esqueleto: dá para combinar corpo, cabeça, elmo e capa de modelos diferentes.
+type Part = { model: string; mesh: string };
+const BODY_SETS: Record<string, string> = { plate: 'Knight', rugged: 'Barbarian', leather: 'Rogue', robe: 'Mage' };
+const LIMBS = ['Body', 'ArmLeft', 'ArmRight', 'LegLeft', 'LegRight'];
+export const CLASS_LOOK: Record<string, { base: string; head: Part; body: string; tint?: string }> = {
+  warrior: { base: 'Knight', head: { model: 'Knight', mesh: 'Knight_Head' }, body: 'rugged' },
+  cleric: { base: 'Knight', head: { model: 'Knight', mesh: 'Knight_Head' }, body: 'plate', tint: '#fff2d0' },
+  mage: { base: 'Mage', head: { model: 'Mage', mesh: 'Mage_Head' }, body: 'robe' },
+  necro: { base: 'Mage', head: { model: 'Mage', mesh: 'Mage_Head' }, body: 'robe', tint: '#a48ad8' },
+  archer: { base: 'Rogue', head: { model: 'Rogue', mesh: 'Rogue_Head' }, body: 'leather' },
+  rogue: { base: 'Rogue_Hooded', head: { model: 'Rogue_Hooded', mesh: 'Rogue_Head_Hooded' }, body: 'leather', tint: '#c8c0d8' },
+};
+const RANK_TINT = ['#9a948c', '#d8d4cc', '#c8f0c8', '#c0d4ff', '#e0c4ff', '#ffd4a8', '#ffb0a8', '#fff0a0', '#ffffff'];
+const RANK_GLOW = ['', '', '', '', '', '', '#ff3b3b', '#ffd23f', '#ff7af0'];
+
+export interface Outfit { key: string; parts: Part[]; tint: string; glow: string }
+
+/** Decide as peças visíveis a partir da classe e do equipamento (tipo e rank da armadura e do elmo). */
+export function outfitFor(classId: string, meta: Record<string, any>): Outfit {
+  const look = CLASS_LOOK[classId] ?? CLASS_LOOK.warrior;
+  const ar: number = meta.ar ?? -1, hr: number = meta.hr ?? -1;
+  // armadura: placas fracas parecem rústicas (bárbaro); a partir do rank C viram armadura de cavaleiro
+  let body = look.body;
+  if (meta.a === 'armor') body = ar >= 3 ? 'plate' : 'rugged';
+  else if (meta.a === 'leather') body = 'leather';
+  else if (meta.a === 'robe') body = 'robe';
+  const bodyModel = BODY_SETS[body];
+  const parts: Part[] = LIMBS.map((l) => ({ model: bodyModel, mesh: `${bodyModel}_${l}` }));
+  let head = look.head;
+  if (meta.h === 'hood') head = { model: 'Rogue_Hooded', mesh: 'Rogue_Head_Hooded' };
+  parts.push(head);
+  if (meta.h === 'helm') parts.push(hr >= 3 ? { model: 'Knight', mesh: 'Knight_Helmet' } : { model: 'Barbarian', mesh: 'Barbarian_Hat' });
+  if (meta.h === 'hat') parts.push({ model: 'Mage', mesh: 'Mage_Hat' });
+  if (ar >= 4) parts.push({ model: bodyModel, mesh: `${bodyModel}_Cape` }); // capa a partir do rank B
+  const rankTint = ar >= 0 ? RANK_TINT[ar] : '#c8c4bc';
+  const tint = mix(look.tint ?? '#ffffff', rankTint);
+  const glow = RANK_GLOW[Math.max(ar, hr)] ?? '';
+  return { key: `${classId}|${parts.map((p) => p.mesh).join(',')}|${tint}|${glow}`, parts, tint, glow };
+}
+
+function mix(a: string, b: string) {
+  const c = new THREE.Color(a).multiply(new THREE.Color(b));
+  return `#${c.getHexString()}`;
+}
+
+const partMatCache = new Map<string, any>();
+function partMaterial(src: any, tint: string, glow: string) {
+  const key = `${src.uuid}|${tint}|${glow}`;
+  let m = partMatCache.get(key);
+  if (!m) {
+    m = src.clone();
+    m.color = new THREE.Color(tint);
+    if (glow) { m.emissive = new THREE.Color(glow); m.emissiveIntensity = 0.18; }
+    partMatCache.set(key, m);
+  }
+  return m;
+}
+
+/** Aplica a roupa: esconde as malhas originais e liga peças (de qualquer herói) ao esqueleto deste personagem. */
+export async function applyOutfit(view: CharView, outfit: Outfit) {
+  if (view.outfitKey === outfit.key) return;
+  view.outfitKey = outfit.key;
+  const models = [...new Set(outfit.parts.map((p) => p.model))];
+  const gl: Record<string, any> = {};
+  await Promise.all(models.map((m) => load(m).then((g) => (gl[m] = g))));
+  if (view.outfitKey !== outfit.key) return; // mudou de novo enquanto carregava
+  for (const p of view.parts) p.parent?.remove(p);
+  view.parts = [];
+  view.scene.traverse((o: any) => { if (o.isSkinnedMesh && !o.userData.part) o.visible = false; });
+  for (const part of outfit.parts) {
+    let src: any = null;
+    gl[part.model].scene.traverse((o: any) => { if (!src && o.isSkinnedMesh && o.name === part.mesh) src = o; });
+    // malhas com várias primitivas viram um grupo com filhos SkinnedMesh
+    const meshes: any[] = [];
+    if (src) meshes.push(src);
+    else gl[part.model].scene.traverse((o: any) => { if (o.isSkinnedMesh && o.parent?.name === part.mesh) meshes.push(o); });
+    for (const m of meshes) {
+      const clone = new THREE.SkinnedMesh(m.geometry, partMaterial(m.material, outfit.tint, outfit.glow));
+      clone.userData.part = true;
+      clone.castShadow = true;
+      clone.frustumCulled = false;
+      const bones = m.skeleton.bones.map((b: any) => view.bones[b.name] ?? b);
+      clone.bind(new THREE.Skeleton(bones, m.skeleton.boneInverses), m.bindMatrix);
+      view.scene.add(clone);
+      view.parts.push(clone);
+    }
   }
 }

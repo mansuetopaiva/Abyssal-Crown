@@ -1,6 +1,6 @@
 // Preços e regras econômicas. O servidor aplica; o cliente só exibe.
 import { MAX_REFINE } from './constants';
-import { rollItem, SOCKET_GEMS } from './loot';
+import { rollItem, SOCKET_GEMS, WEAPONS } from './loot';
 import { hashSeed, mulberry32 } from './rng';
 import type { Item } from './types';
 
@@ -41,5 +41,23 @@ export function smithStock(charId: number, date: string, ilvl: number): { item: 
   });
 }
 
+/** Armas à venda no Mercado: renovam a cada hora (ou ao pagar para renovar). Uma de cada tipo, ranks F a A. */
+export const MERCHANT_PERIOD_MS = 3600_000;
+export const merchantPeriod = (now = Date.now()) => Math.floor(now / MERCHANT_PERIOD_MS);
+export const merchantRerollCost = (level: number) => 80 + level * 15;
+export function merchantStock(charId: number, period: number, reroll: number, ilvl: number): { item: Item; price: number }[] {
+  const rng = mulberry32(hashSeed('merchant', charId, period, reroll));
+  const types = WEAPONS.map((w) => w.type);
+  for (let i = types.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [types[i], types[j]] = [types[j], types[i]]; }
+  return types.slice(0, 12).map((type, i) => {
+    const r = rng();
+    const rank = r < 0.3 ? 'F' : r < 0.55 ? 'E' : r < 0.75 ? 'D' : r < 0.9 ? 'C' : r < 0.98 ? 'B' : 'A';
+    const item = rollItem(rng, { ilvl: Math.max(1, ilvl), rank, slotType: 'weapon', baseType: type });
+    item.id = `mer${i}`;
+    return { item, price: Math.round(item.value * 6 + 40 + ilvl * 4) };
+  });
+}
+
+export const STASH_SLOTS = 48;
 export const MARKET_MAX_LISTINGS = 10;
 export const MARKET_MAX_PRICE = 1_000_000_000;

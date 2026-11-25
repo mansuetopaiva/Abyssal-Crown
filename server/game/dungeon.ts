@@ -42,7 +42,7 @@ interface Tele {
   owner: Player | null; src: Monster | null; mult: number; dmg: number; element: Element; stun?: number; drain?: number; skillId?: string;
 }
 interface Minion { id: number; owner: Player; x: number; y: number; until: number; nextAtk: number; mult: number }
-interface Loot { id: number; owner: Player; x: number; y: number; gold?: number; item?: Item; gems?: number }
+interface Loot { id: number; owner: Player; x: number; y: number; gold?: number; item?: Item; gems?: number; dropped?: boolean; armed?: boolean }
 interface PTrap { id: number; owner: Player; x: number; y: number; until: number; mult: number; r: number; skillId: string; element: Element }
 
 type DmgOpts = { skillId?: string; crit?: boolean; poison?: number; poisonDur?: number; stun?: number; slow?: number; drain?: number; noProc?: boolean };
@@ -208,9 +208,15 @@ export class Dungeon extends World {
     // coleta automática de loot (somente o dono)
     for (let i = this.loots.length - 1; i >= 0; i--) {
       const l = this.loots[i];
-      if (l.owner !== p || dist(l.x, l.y, p.x, p.y) > 16) continue;
+      if (l.owner !== p) continue;
+      // item largado pelo jogador só volta a ser coletado depois que ele se afastar
+      if (l.dropped && !l.armed) { if (dist(l.x, l.y, p.x, p.y) > 30) l.armed = true; continue; }
+      if (dist(l.x, l.y, p.x, p.y) > 16) continue;
       if (l.item) {
-        if (!addToInventory(p.char, l.item)) { if (this.tick % 40 === 0) p.toast('Inventário cheio!', 'error'); continue; }
+        if (!addToInventory(p.char, l.item)) {
+          if (this.time > p.fullWarnAt) { p.fullWarnAt = this.time + 4; p.toast('Inventário cheio! Abra o inventário (I) e largue um item no chão para trocar.', 'error'); }
+          continue;
+        }
         this.onItemAcquired(p, l.item);
       }
       if (l.gold) p.char.gold += l.gold;
@@ -985,4 +991,10 @@ export class Dungeon extends World {
   }
 
   playerCanLeave(p: Player) { return !p.dead; }
+
+  /** Larga um item do inventário no chão, aos pés do jogador. */
+  dropItem(p: Player, item: Item) {
+    const a = Math.random() * Math.PI * 2;
+    this.loots.push({ id: newEntityId(), owner: p, x: p.x + Math.cos(a) * 10, y: p.y + Math.sin(a) * 10, item, dropped: true, armed: false });
+  }
 }
